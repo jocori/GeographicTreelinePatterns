@@ -2,35 +2,123 @@
 setwd("~/Desktop/KU/Projects/GeographicTreelinePatterns")
 #load in packages
 library(dplyr)
+library(lme4)
+library(AICcmodavg)
 # read in data
-regs<-read.csv("data/Regressions_3Jan.csv", header = TRUE)
+regs_full<-read.csv("data/Regressions_26Oct.csv", header = TRUE)
 count(regs[regs$Significance >= 0.05,])
 
 #Keep linear models only
-regs<-regs[regs$Regression_Type == "Linear",]
+regs<-regs_full[regs_full$Regression_Type == "Linear",]
+
+#Keep only significant models
+regs<-regs[regs$Significance<=0.05,]
+
+#Keep only models with negative slope
+regs<-regs[regs$Slope < 0,]
+
+#Keep only average NDVI NOT Max (relevant in year calculation)
+regs <- regs %>% filter(Year %in% c("Avg8488", "Avg9802", "Avg1317"))
+
+#Which mountains are excluded now?
+x1<-unique(regs$Peak)
+x2<-unique(regs_full$Peak)
+# no mountains are completely excluded! 
 
 #remove extraneous columns
 regs<-regs[,!(names(regs)%in%c("Regression_Type","X"))]
 
-##percent linear models that are significant
-count(regs[regs$Significance >= 0.05,])
-## should we only keep significant models?
-## should I subtract 8488 from 1317? do a range from 8488 to 9802 and then 1317? Calculate rate?
+
 ## what should be included in final model? Final model type? Any random effect?
 
-##slope is ndvi~elevation...so the relationship between vegetation density and elevation
+
 
 ##what should the response variable be? 
 
-##############################
-#keep best model for each:
-#regs<-regs %>%
- # filter(regs$Regression_Type == regs$Best_Model)
-#unique(regs$Regression_Type)
-#dim(regs[regs$Regression_Type == "Reciprocal_Quadratic",])
 
 ### solve y = mx + b
+# NDVI = slope(elevation) + intercept....
 ###midpoint btw min and max NDVI, plug into equation and see what elevation
 ### range divide by 2 add to minimum
 ###elevation of treeline
 ### difference betweeen present and 80s
+
+## calculating response variable
+
+#elevation at treeline = (NDVI- Intercept)/Slope
+regs$elevation_treeline<-(regs$treeline_NDVI-regs$Intercept)/regs$Slope
+#exclude rows where elevation at treeline is negative...only 8/1748
+regs<-regs[regs$elevation_treeline >0,]
+head(regs)
+
+#now...subtract 80s from 2017 to get final response variable
+# Ensure that rows are grouped by Peak and Direction so that calculations are done within these groups
+
+# Filter out peak-direction combinations that do not have both years
+regs_filtered <- regs %>%
+  group_by(Peak, Direction) %>%
+  filter(all(c("Avg8488", "Avg1317") %in% Year)) %>%
+  ungroup()
+
+# Calculate the change in treeline elevation
+regs <- regs_filtered %>%
+  group_by(Peak, Direction) %>%
+  mutate(
+    change_in_treeline_elevation = elevation_treeline[Year == "Avg1317"] - elevation_treeline[Year == "Avg8488"]
+  ) %>%
+  ungroup()
+
+# View the updated dataset
+head(regs)
+
+#remove unnecessary columns
+data<-regs[,-c(3:8,14,15)]
+# Remove duplicate rows based on all columns
+data <- data %>%
+  distinct()
+#Which mountains are excluded now?
+x1<-unique(data$Peak)
+x2<-unique(regs_full$Peak)
+setdiff(x2, x1)
+
+###### mountains excluded from analysis ######
+## "Kaza Mtn."      "Mt. Harrison"   "Mt. Ovington"   "Mt. Timpanogos" "Star Peak" ##
+head(data)
+
+## model selection
+hist(data$change_in_treeline_elevation)
+plot(data$change_in_treeline_elevation~data$Lat, data = regs)
+plot(data$change_in_treeline_elevation~data$Long, data = regs)
+
+
+m1<-lmer(change_in_treeline_elevation~Lat +Long + (1|Peak_ID), data = data)
+summary(m1)
+AIC(m1)
+m2<-lmer(change_in_treeline_elevation~Lat *Long + (1|Peak_ID), data = data)
+summary(m2)
+AIC(m2)
+m3<-lmer(change_in_treeline_elevation~Lat +Long + Stations_After_Treeline +(1|Peak_ID), data = data)
+summary(m3)
+AIC(m3)
+m4<-lmer(change_in_treeline_elevation~  Stations_After_Treeline +Lat*Long+(1|Peak_ID), data = data)
+summary(m4)
+AIC(m4)
+m5<-lmer(change_in_treeline_elevation~Lat +Long + Direction +(1|Peak_ID), data = data)
+summary(m5)
+AIC(m5)
+m6<-lmer(change_in_treeline_elevation~ Direction +Lat*Long+(1|Peak_ID), data = data)
+summary(m6)
+AIC(m6)
+m7<-lmer(change_in_treeline_elevation~Lat +Long + Stations_After_Treeline +Direction+(1|Peak_ID), data = data)
+summary(m7)
+AIC(m7)
+m8<-lmer(change_in_treeline_elevation~Stations_After_Treeline +Direction+Lat*Long+(1|Peak_ID), data = data)
+summary(m8)
+AIC(m8)
+
+mods<-list(m1,m2,m3,m4,m5,m6,m7,m8)
+aictab(cand.set = mods)
+
+##Model 5 is the best model
+m5<-lmer(change_in_treeline_elevation~Lat +Long + Direction +(1|Peak_ID), data = data)
+summary(m5)
