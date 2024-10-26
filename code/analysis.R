@@ -122,3 +122,4 @@ aictab(cand.set = mods)
 ##Model 5 is the best model
 m5<-lmer(change_in_treeline_elevation~Lat +Long + Direction +(1|Peak_ID), data = data)
 summary(m5)
+confint(m5)
