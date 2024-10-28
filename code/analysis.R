@@ -5,7 +5,7 @@ library(dplyr)
 library(lme4)
 library(AICcmodavg)
 # read in data
-regs_full<-read.csv("data/Regressions_26Oct.csv", header = TRUE)
+regs_full<-read.csv("data/Regressions_28Oct.csv", header = TRUE)
 count(regs[regs$Significance >= 0.05,])
 
 #Keep linear models only
@@ -46,14 +46,15 @@ regs<-regs[,!(names(regs)%in%c("Regression_Type","X"))]
 ## calculating response variable
 
 #elevation at treeline = (NDVI- Intercept)/Slope
-regs$elevation_treeline<-(regs$treeline_NDVI-regs$Intercept)/regs$Slope
+#regs$elevation_treeline<-(regs$treeline_NDVI-regs$Intercept)/regs$Slope
 #exclude rows where elevation at treeline is negative...only 8/1748
-regs<-regs[regs$elevation_treeline >0,]
+#regs<-regs[regs$elevation_treeline >0,]
 head(regs)
 
 #now...subtract 80s from 2017 to get final response variable
 # Ensure that rows are grouped by Peak and Direction so that calculations are done within these groups
-
+#y = mx+ b...NDVI = slope*treeline_elevation + intercept
+regs$treeline_NDVI <- (regs$Slope*regs$Treeline_elevation) + regs$Intercept
 # Filter out peak-direction combinations that do not have both years
 regs_filtered <- regs %>%
   group_by(Peak, Direction) %>%
@@ -64,7 +65,7 @@ regs_filtered <- regs %>%
 regs <- regs_filtered %>%
   group_by(Peak, Direction) %>%
   mutate(
-    change_in_treeline_elevation = elevation_treeline[Year == "Avg1317"] - elevation_treeline[Year == "Avg8488"]
+    change_in_treeline_NDVI = treeline_NDVI[Year == "Avg1317"] - treeline_NDVI[Year == "Avg8488"]
   ) %>%
   ungroup()
 
@@ -82,44 +83,46 @@ x2<-unique(regs_full$Peak)
 setdiff(x2, x1)
 
 ###### mountains excluded from analysis ######
-## "Kaza Mtn."      "Mt. Harrison"   "Mt. Ovington"   "Mt. Timpanogos" "Star Peak" ##
+## "Mt. Harrison"   "Mt. Ovington"   "Mt. Timpanogos" "Star Peak"  
 head(data)
 
 ## model selection
-hist(data$change_in_treeline_elevation)
-plot(data$change_in_treeline_elevation~data$Lat, data = regs)
-plot(data$change_in_treeline_elevation~data$Long, data = regs)
+hist(data$change_in_treeline_NDVI)
+plot(data$change_in_treeline_NDVI~data$Lat, data = data)
+plot(data$change_in_treeline_NDVI~data$Long, data = data)
 
 
-m1<-lmer(change_in_treeline_elevation~Lat +Long + (1|Peak_ID), data = data)
+m1<-lmer(change_in_treeline_NDVI~Lat +Long + (1|Peak_ID), data = data)
 summary(m1)
 AIC(m1)
-m2<-lmer(change_in_treeline_elevation~Lat *Long + (1|Peak_ID), data = data)
+m2<-lmer(change_in_treeline_NDVI~Lat *Long + (1|Peak_ID), data = data)
 summary(m2)
 AIC(m2)
-m3<-lmer(change_in_treeline_elevation~Lat +Long + Stations_After_Treeline +(1|Peak_ID), data = data)
+m3<-lmer(change_in_treeline_NDVI~Lat +Long + Stations_After_Treeline +(1|Peak_ID), data = data)
 summary(m3)
 AIC(m3)
-m4<-lmer(change_in_treeline_elevation~  Stations_After_Treeline +Lat*Long+(1|Peak_ID), data = data)
+m4<-lmer(change_in_treeline_NDVI~  Stations_After_Treeline +Lat*Long+(1|Peak_ID), data = data)
 summary(m4)
 AIC(m4)
-m5<-lmer(change_in_treeline_elevation~Lat +Long + Direction +(1|Peak_ID), data = data)
+m5<-lmer(change_in_treeline_NDVI~Lat +Long + Direction +(1|Peak_ID), data = data)
 summary(m5)
 AIC(m5)
-m6<-lmer(change_in_treeline_elevation~ Direction +Lat*Long+(1|Peak_ID), data = data)
+m6<-lmer(change_in_treeline_NDVI~ Direction +Lat*Long+(1|Peak_ID), data = data)
 summary(m6)
 AIC(m6)
-m7<-lmer(change_in_treeline_elevation~Lat +Long + Stations_After_Treeline +Direction+(1|Peak_ID), data = data)
+m7<-lmer(change_in_treeline_NDVI~Lat +Long + Stations_After_Treeline +Direction+(1|Peak_ID), data = data)
 summary(m7)
 AIC(m7)
-m8<-lmer(change_in_treeline_elevation~Stations_After_Treeline +Direction+Lat*Long+(1|Peak_ID), data = data)
+m8<-lmer(change_in_treeline_NDVI~Stations_After_Treeline +Direction+Lat*Long+(1|Peak_ID), data = data)
 summary(m8)
 AIC(m8)
 
 mods<-list(m1,m2,m3,m4,m5,m6,m7,m8)
 aictab(cand.set = mods)
 
-##Model 5 is the best model
-m5<-lmer(change_in_treeline_elevation~Lat +Long + Direction +(1|Peak_ID), data = data)
-summary(m5)
-confint(m5)
+##Model 1 is the best model
+m1<-lmer(change_in_treeline_NDVI~Lat +Long + (1|Peak_ID), data = data)
+summary(m1)
+confint(m1)
+
+###extract elevation from treesbegin  for present day keyed to NDVI from y = mx + b  , use that elevatino to get NDVI at treeline in the 1980s
