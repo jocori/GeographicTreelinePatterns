@@ -65,7 +65,7 @@ select_stations <- function(df) {
   
   if (length(treeline_index) > 0) {
     # Extract NDVI at treeline
-    treeline_NDVI <- df$NDVI[treeline_index[1]]
+    treeline_elevation <- df$elevation[treeline_index[1]]
     #Calculate stations after treeline
     stations_after_treeline <- nrow(df) - treeline_index[1] + 1
     stations_to_use <- max(10, 2 * stations_after_treeline + 1)
@@ -79,10 +79,10 @@ select_stations <- function(df) {
   } else {
     #If no treeline, select last 10 stations
     selected_df <- tail(df, 10)
-    treeline_NDVI <- NA
+    treeline_elevation <- NA
   }
-  # Add treeline_NDVI as a column to the selected dataframe
-  selected_df$treeline_NDVI <- treeline_NDVI
+  # Add treeline_elevation as a column to the selected dataframe
+  selected_df$treeline_elevation <- treeline_elevation
   return(selected_df)
 }
 
@@ -97,7 +97,7 @@ selected_nested_peaks <- lapply(nested_peaks, function(peak) {
 Now each dataframe only contains the points surrounding treeline. At this point, I performed three types of regressions on each data frame (Linear, reciprocal-linear, and reciprocal-quadratic) to see which model best describes the relationship between NDVI and elevation. The three models were compared via AIC for each peak, direction, and year group. I achieved this by building a function and applying it to the nested list.
 
 ```{r regression function and application}
-perform_regressions <- function(df, peak_name, direction, year, peak_id, longitude, latitude, country, treeline_NDVI) {
+perform_regressions <- function(df, peak_name, direction, year, peak_id, longitude, latitude, country, treeline_elevation) {
   if (!is.data.frame(df) || nrow(df) <= 1) {
     return(data.frame(
       Peak = rep(peak_name, 3),
@@ -114,7 +114,7 @@ perform_regressions <- function(df, peak_name, direction, year, peak_id, longitu
       Long = rep(longitude, 3),
       Lat = rep(latitude, 3),
       Country = rep(country, 3),
-      Treeline_NDVI = rep(treeline_NDVI, 3)
+      Treeline_elevation = rep(treeline_elevation, 3)
     ))
   }
   
@@ -138,7 +138,7 @@ perform_regressions <- function(df, peak_name, direction, year, peak_id, longitu
       Long = rep(longitude, 3),
       Lat = rep(latitude, 3),
       Country = rep(country, 3),
-      Treeline_NDVI = rep(treeline_NDVI, 3)
+      Treeline_elevation = rep(treeline_elevation, 3)
     ))
   }
   
@@ -182,7 +182,7 @@ perform_regressions <- function(df, peak_name, direction, year, peak_id, longitu
     Long = rep(longitude, 3),
     Lat = rep(latitude, 3),
     Country = rep(country,3),
-    treeline_NDVI = rep(treeline_NDVI,3)
+    Treeline_elevation = rep(treeline_elevation,3)
   )
   
   return(results_df)
@@ -204,11 +204,11 @@ for (peak_name in names(selected_nested_peaks)) {
       longitude <- unique(year_data$long)[1]
       latitude <- unique(year_data$lat)[1]
       country <- unique(year_data$Country)[1]
-      treeline_NDVI = unique(year_data$treeline_NDVI)[1]
+      treeline_elevation = unique(year_data$treeline_elevation)[1]
       # Perform regressions and store results
       regression_results <- perform_regressions(year_data, peak_name, direction, 
                                                 year_columns[year], peak_id, longitude, 
-                                                latitude,country,treeline_NDVI )
+                                                latitude,country,treeline_elevation )
       all_results <- c(all_results, list(regression_results))
     }
   }
@@ -218,7 +218,7 @@ for (peak_name in names(selected_nested_peaks)) {
 final_results_df <- do.call(rbind, all_results) #this works but only preserves rows for the best model
 
 
-write.csv(final_results_df,"Regressions_26Oct.csv")
+write.csv(final_results_df,"Regressions_28Oct.csv")
 ```
 Now the analysis is complete on each dataframe. This is as far as I have gotten with the project. Below, I built a sample plot that illustrates what I aim to do with each year group in each direction and each year. I will also analyze change in intercept and slope. However, we need to filter the data to only relevant relationships, and we have not yet decided how we will filter prior to comparing the models. therefore, I am unable to go further at this time.
 ```{r plot example graph}
