@@ -6,7 +6,7 @@ library(lme4)
 library(AICcmodavg)
 # read in data
 regs_full<-read.csv("data/Regressions_28Oct.csv", header = TRUE)
-count(regs[regs$Significance >= 0.05,])
+count(regs_full[regs_full$Significance >= 0.05,])
 
 #Keep linear models only
 regs<-regs_full[regs_full$Regression_Type == "Linear",]
@@ -126,3 +126,24 @@ summary(m1)
 confint(m1)
 
 ###extract elevation from treesbegin  for present day keyed to NDVI from y = mx + b  , use that elevatino to get NDVI at treeline in the 1980s
+
+#### y axis should be change in elevation at treeline.....to get that, 
+#elevation at trees begin -> present day elevation at treeline, 
+#put in present day regression equation > 
+#get out of that the NDVI at present at treesbegin elevation > 
+#plug that NDVI into 1980s relationship from regressions y = mx +b > 
+#solve for elevation at that NDVI value
+
+#split present day and 1980s into seperate dataframes 
+present<-regs_full[regs_full$Year == "Avg1317",]
+past<-regs_full[regs_full$Year == "Avg8488",]
+regs_full$Treeline_elevation
+
+#present day regression equation
+present$present_NDVI<-(present$Treeline_elevation*present$Slope) + present$Intercept
+
+#plug present day NDVI at treesbegin value into past regression equation to calculate past elevation
+#y = mx + b....x = y-b/m...(present ndvi - intercept)/slope
+past$past_elevation <- (present$present_NDVI -past$Intercept)/past$Slope
+colnames(present$Treeline_elevation) <- "present_elevation" # fix column name
+#get difference
