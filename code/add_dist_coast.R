@@ -76,4 +76,4 @@ library(dplyr)
 regs <- regs %>%
   left_join(coast, by = c("Lat" = "Lat", "Long" = "Long"))
 
-
+write.csv(regs, "data/Regressions12Nov24.csv")
