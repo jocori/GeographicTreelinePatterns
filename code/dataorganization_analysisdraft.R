@@ -4,6 +4,7 @@ setwd("~/Desktop/KU/Projects/GeographicTreelinePatterns")
 library(dplyr)
 library(lme4)
 library(AICcmodavg)
+library(ggplot2)
 # read in data
 regs_full<-read.csv("data/Regressions_28Oct.csv", header = TRUE)
 count(regs_full[regs_full$Significance >= 0.05,])
@@ -256,24 +257,57 @@ m8<-lmer(change_in_treeline_elevation~Stations_After_Treeline +Direction+Lat*Lon
 summary(m8)
 confint(m8)
 
-regs %>%
+regs_plot<-regs[,-c(13:24)]
+regs_plot %>%
   ggplot(aes(y = change_in_treeline_elevation, x = Lat)) + 
   geom_smooth() + 
   xlab("Latitude") + 
   ylab("Change in Treeline Elevation (2017 - 1984)")
 
-regs %>%
+regs_plot %>%
   ggplot(aes(y = change_in_treeline_elevation, x = Long)) + 
   geom_smooth() + 
   xlab("Longitude") + 
   ylab("Change in Treeline Elevation (2017 - 1984)")
 
-regs %>%
+regs_plot %>%
   ggplot(aes(x = Lat, y = change_in_treeline_elevation, color = Long)) + 
   geom_point(size = 3, alpha = 0.7) + 
   scale_color_gradient(name = "Longitude", low = "blue", high = "red") + 
   xlab("Latitude") + 
-  ylab("Change in Treeline Elevation (2017 - 1984)")
+  ylab("Change in Treeline Elevation (2017 - 1984)") + theme_minimal() +
+  theme(panel.grid = element_blank(), axis.line = 
+          element_line(colour = "black", linewidth = 0.25), 
+        axis.text = element_text(family = "sans"), 
+        axis.ticks = element_line(),
+        axis.title = element_text(size = 13, family = "sans"))
+
+regs_full %>%
+  filter(Year %in% c("Avg8488", "Avg1317")) %>% 
+  mutate(Region = ifelse(Lat > 23.5, "Tropical Mountains", "Temperate Mountains")) %>%
+  ggplot(aes(y = Treeline_elevation, x = Year)) + geom_boxplot() + ylim(1900,2200)+
+  facet_wrap(~ Region)
+
+regs_full %>%
+  filter(Year %in% c("Avg8488", "Avg1317")) %>%
+  mutate(Region = ifelse(Lat > 23.5, "Tropical Mountains", "Temperate Mountains")) %>%
+  ggplot(aes(x = Treeline_elevation, fill = Year)) +
+  geom_density(alpha = 0.5) +
+  facet_wrap(~ Region) +
+  xlab("Treeline Elevation") +
+  ylab("Density") +
+  ggtitle("Distribution of Treeline Elevations by Region and Year")
+
+regs_full %>%
+  filter(Year %in% c("Avg8488", "Avg1317")) %>%
+  mutate(Region = ifelse(Lat > 23.5, "Tropical Mountains", "Temperate Mountains")) %>%
+  group_by(Region) %>%
+  summarize(diff_elevation = diff(Treeline_elevation[order(Year)]),
+            .groups = "drop") %>%
+  ggplot(aes(x = Region, y = diff_elevation, fill = Region)) +
+  geom_bar(stat = "identity") +
+  ylab("Change in Treeline Elevation (2017 - 1984)") +
+  ggtitle("Change in Treeline Elevation by Region")
 
 
 #should we throw in distance to coast as another predictor??
