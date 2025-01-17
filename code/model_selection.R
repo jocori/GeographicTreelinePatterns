@@ -38,83 +38,83 @@ corrplot(correlation_matrix, method = "color",
          type = "upper") # autocorrelation between lat and long is concerning
 
 #linear mixed models
-m1<-lmer(change_in_treeline_elevation~Lat_scaled +Long_scaled + (1|Peak_ID), data = regs)
+m1<-lmer(change_in_treeline_elevation~Lat +Long + (1|Peak_ID), data = regs)
 summary(m1)
 AIC(m1)
 vif(m1)
 moran.test(resid(m1),listw =listw)
-m2<-lmer(change_in_treeline_elevation~Lat_scaled *Long_scaled + (1|Peak_ID), data = regs)
+m2<-lmer(change_in_treeline_elevation~Lat *Long + (1|Peak_ID), data = regs)
 summary(m2)
 AIC(m2)
 vif(m2)
 moran.test(resid(m2),listw =listw)
-m3<-lmer(change_in_treeline_elevation~Lat_scaled +Long_scaled + Stations_After_Treeline +(1|Peak_ID), data = regs)
+m3<-lmer(change_in_treeline_elevation~Lat +Long + Stations_After_Treeline +(1|Peak_ID), data = regs)
 summary(m3)
 AIC(m3)
 vif(m3)
 moran.test(resid(m3),listw =listw)
-m4<-lmer(change_in_treeline_elevation~  Stations_After_Treeline +Lat_scaled*Long_scaled+(1|Peak_ID), data = regs)
+m4<-lmer(change_in_treeline_elevation~  Stations_After_Treeline +Lat*Long+(1|Peak_ID), data = regs)
 summary(m4)
 AIC(m4)
 vif(m4)
 moran.test(resid(m4),listw =listw)
-m5<-lmer(change_in_treeline_elevation~Lat_scaled +Long_scaled + Direction +(1|Peak_ID), data = regs)
+m5<-lmer(change_in_treeline_elevation~Lat +Long + Direction +(1|Peak_ID), data = regs)
 summary(m5)
 AIC(m5)
 vif(m5)
 moran.test(resid(m5),listw =listw)
-m6<-lmer(change_in_treeline_elevation~ Direction +Lat_scaled*Long_scaled+(1|Peak_ID), data = regs)
+m6<-lmer(change_in_treeline_elevation~ Direction +Lat*Long+(1|Peak_ID), data = regs)
 summary(m6)
 AIC(m6)
 vif(m6)
 moran.test(resid(m6),listw =listw)
-m7<-lmer(change_in_treeline_elevation~Lat_scaled +Long_scaled + Stations_After_Treeline +Direction+(1|Peak_ID), data = regs)
+m7<-lmer(change_in_treeline_elevation~Lat +Long + Stations_After_Treeline +Direction+(1|Peak_ID), data = regs)
 summary(m7)
 AIC(m7)
 vif(m7)
 moran.test(resid(m7),listw =listw)
-m8<-lmer(change_in_treeline_elevation~Stations_After_Treeline +Direction+Lat_scaled*Long_scaled+(1|Peak_ID), data = regs)
+m8<-lmer(change_in_treeline_elevation~Stations_After_Treeline +Direction+Lat*Long+(1|Peak_ID), data = regs)
 summary(m8)
 AIC(m8)
 vif(m8)
 moran.test(resid(m8),listw =listw)
-m9<-lmer(change_in_treeline_elevation~Lat_scaled+Long_scaled +dist_coast+(1|Peak_ID), data = regs)
+m9<-lmer(change_in_treeline_elevation~Lat+Long +dist_coast+(1|Peak_ID), data = regs)
 summary(m9)
 AIC(m9)
 vif(m9)
 moran.test(resid(m9),listw =listw)
-m10<-lmer(change_in_treeline_elevation~dist_coast+Lat_scaled*Long_scaled +(1|Peak_ID), data = regs)
+m10<-lmer(change_in_treeline_elevation~dist_coast+Lat*Long +(1|Peak_ID), data = regs)
 summary(m10)
 AIC(m10)
 vif(m10)
 moran.test(resid(m10),listw =listw)
-m11<-lmer(change_in_treeline_elevation~dist_coast+Stations_After_Treeline+Lat_scaled+Long_scaled +(1|Peak_ID), data = regs)
+m11<-lmer(change_in_treeline_elevation~dist_coast+Stations_After_Treeline+Lat+Long +(1|Peak_ID), data = regs)
 summary(m11)
 AIC(m11)
 vif(m11)
 moran.test(resid(m11),listw =listw)
-m12<-lmer(change_in_treeline_elevation~dist_coast+Stations_After_Treeline+Lat_scaled*Long_scaled +(1|Peak_ID), data = regs)
+m12<-lmer(change_in_treeline_elevation~dist_coast+Stations_After_Treeline+Lat*Long +(1|Peak_ID), data = regs)
 summary(m12)
 AIC(m12)
 vif(m12)
 moran.test(resid(m12),listw =listw)
-m13<-lmer(change_in_treeline_elevation~dist_coast+Direction+Lat_scaled+Long_scaled +(1|Peak_ID), data = regs)
+m13<-lmer(change_in_treeline_elevation~dist_coast+Direction+Lat+Long +(1|Peak_ID), data = regs)
 summary(m13)
 AIC(m13)
 vif(m13)
 moran.test(resid(m13),listw =listw)
-m14<-lmer(change_in_treeline_elevation~dist_coast+Direction+Lat_scaled*Long_scaled +(1|Peak_ID), data = regs)
+m14<-lmer(change_in_treeline_elevation~dist_coast+Direction+Lat*Long +(1|Peak_ID), data = regs)
 summary(m14)
 AIC(m14)
 vif(m14)
 moran.test(resid(m14),listw =listw)
-m15<-lmer(change_in_treeline_elevation~dist_coast+Direction+Stations_After_Treeline+Lat_scaled+Long_scaled +(1|Peak_ID), data = regs)
+m15<-lmer(change_in_treeline_elevation~dist_coast+Direction+Stations_After_Treeline+Lat+Long +(1|Peak_ID), data = regs)
 summary(m15)
 AIC(m15)
 vif(m15)
 moran.test(resid(m15),listw =listw)
 m16<-lmer(change_in_treeline_elevation~dist_coast+Direction+
-            Stations_After_Treeline+Lat_scaled*Long_scaled +(1|Peak_ID), data = regs)
+            Stations_After_Treeline+Lat*Long +(1|Peak_ID), data = regs)
 summary(m16)
 AIC(m16)
 vif(m16)
@@ -132,22 +132,22 @@ format_numeric <- function(x) {
 
 # Define model terms for lmer models
 lmer_terms <- c(
-  "Lat_scaled + Long_scaled",
-  "Lat_scaled * Long_scaled",
-  "Lat_scaled + Long_scaled + Stations_After_Treeline",
-  "Stations_After_Treeline + Lat_scaled * Long_scaled",
-  "Lat_scaled + Long_scaled + Direction",
-  "Direction + Lat_scaled * Long_scaled",
-  "Lat_scaled + Long_scaled + Stations_After_Treeline + Direction",
-  "Stations_After_Treeline + Direction + Lat_scaled * Long_scaled",
-  "Lat_scaled + Long_scaled + dist_coast",
-  "dist_coast + Lat_scaled * Long_scaled",
-  "dist_coast + Stations_After_Treeline + Lat_scaled + Long_scaled",
-  "dist_coast + Stations_After_Treeline + Lat_scaled * Long_scaled",
-  "dist_coast + Direction + Lat_scaled + Long_scaled",
-  "dist_coast + Direction + Lat_scaled * Long_scaled",
-  "dist_coast + Direction + Stations_After_Treeline + Lat_scaled + Long_scaled",
-  "dist_coast + Direction + Stations_After_Treeline + Lat_scaled * Long_scaled"
+  "Lat + Long",
+  "Lat * Long",
+  "Lat + Long + Stations_After_Treeline",
+  "Stations_After_Treeline + Lat * Long",
+  "Lat + Long + Direction",
+  "Direction + Lat * Long",
+  "Lat + Long + Stations_After_Treeline + Direction",
+  "Stations_After_Treeline + Direction + Lat * Long",
+  "Lat + Long + dist_coast",
+  "dist_coast + Lat * Long",
+  "dist_coast + Stations_After_Treeline + Lat + Long",
+  "dist_coast + Stations_After_Treeline + Lat * Long",
+  "dist_coast + Direction + Lat + Long",
+  "dist_coast + Direction + Lat * Long",
+  "dist_coast + Direction + Stations_After_Treeline + Lat + Long",
+  "dist_coast + Direction + Stations_After_Treeline + Lat * Long"
 )
 
 # Calculate delta AIC and weights
@@ -177,19 +177,19 @@ write.csv(
 
 ## spatial mixed models 
 #Fit a spatially correlated random effect to check consistency
-m1_spamm <- fitme(change_in_treeline_elevation~Lat_scaled +Long_scaled+ 
+m1_spamm <- fitme(change_in_treeline_elevation~Lat +Long+ 
                    Matern(1|Long +Lat), data = regs, method = "REML")
 summary(m1_spamm)
 AIC(m1_spamm)
 moran.test(resid(m1_spamm),listw =listw)
 
-m2_spamm<-fitme(change_in_treeline_elevation~Lat_scaled *Long_scaled +
+m2_spamm<-fitme(change_in_treeline_elevation~Lat *Long +
                   Matern(1|Long +Lat), data = regs, method = "REML")
 summary(m2_spamm)
 AIC(m2_spamm)
 moran.test(resid(m2_spamm),listw =listw)
 
-m3_spamm<-fitme(change_in_treeline_elevation~Lat_scaled +Long_scaled + 
+m3_spamm<-fitme(change_in_treeline_elevation~Lat +Long + 
                   Stations_After_Treeline +Matern(1|Long +Lat),
                 data = regs, method = "REML")
 summary(m3_spamm)
@@ -197,28 +197,28 @@ AIC(m3_spamm)
 moran.test(resid(m3_spamm),listw =listw)
 
 m4_spamm<-fitme(change_in_treeline_elevation~  Stations_After_Treeline +
-                  Lat_scaled*Long_scaled+Matern(1|Long +Lat), 
+                  Lat*Long+Matern(1|Long +Lat), 
                 data = regs, method = "REML")
 summary(m4_spamm)
 AIC(m4_spamm)
 moran.test(resid(m4_spamm),listw =listw)
 
-m5_spamm<-fitme(change_in_treeline_elevation~Lat_scaled +
-                  Long_scaled + Direction +Matern(1|Long +Lat), 
+m5_spamm<-fitme(change_in_treeline_elevation~Lat +
+                  Long + Direction +Matern(1|Long +Lat), 
                 data = regs, method = "REML")
 summary(m5_spamm)
 AIC(m5_spamm)
 moran.test(resid(m5_spamm),listw =listw)
 
 m6_spamm<-fitme(change_in_treeline_elevation~ Direction +
-                  Lat_scaled*Long_scaled+Matern(1|Long +Lat), 
+                  Lat*Long+Matern(1|Long +Lat), 
                 data = regs, method = "REML")
 summary(m6_spamm)
 AIC(m6_spamm)
 moran.test(resid(m6_spamm),listw =listw)
 
-m7_spamm<-fitme(change_in_treeline_elevation~Lat_scaled +
-                  Long_scaled + Stations_After_Treeline +
+m7_spamm<-fitme(change_in_treeline_elevation~Lat +
+                  Long + Stations_After_Treeline +
                   Direction+Matern(1|Long +Lat), data = regs, 
                 method = "REML")
 summary(m7_spamm)
@@ -226,50 +226,50 @@ AIC(m7_spamm)
 moran.test(resid(m7_spamm),listw =listw)
 
 m8_spamm<-fitme(change_in_treeline_elevation~Stations_After_Treeline +
-                  Direction+Lat_scaled*Long_scaled+Matern(1|Long +Lat), 
+                  Direction+Lat*Long+Matern(1|Long +Lat), 
                 data = regs, method = "REML")
 summary(m8_spamm)
 AIC(m8_spamm)
 moran.test(resid(m8_spamm),listw =listw)
 
-m9_spamm<-fitme(change_in_treeline_elevation~Lat_scaled+
-                  Long_scaled +dist_coast+Matern(1|Long +Lat), 
+m9_spamm<-fitme(change_in_treeline_elevation~Lat+
+                  Long +dist_coast+Matern(1|Long +Lat), 
                 data = regs, method = "REML")
 summary(m9_spamm)
 AIC(m9_spamm)
 moran.test(resid(m9_spamm),listw =listw)
 
 m10_spamm<-fitme(change_in_treeline_elevation~dist_coast+
-                   Lat_scaled*Long_scaled +Matern(1|Long +Lat), 
+                   Lat*Long +Matern(1|Long +Lat), 
                  data = regs, method = "REML")
 summary(m10_spamm)
 AIC(m10_spamm)
 moran.test(resid(m10_spamm),listw =listw)
 
 m11_spamm<-fitme(change_in_treeline_elevation~dist_coast+
-                   Stations_After_Treeline+Lat_scaled+
-                   Long_scaled +Matern(1|Long +Lat), 
+                   Stations_After_Treeline+Lat+
+                   Long +Matern(1|Long +Lat), 
                  data = regs, method = "REML")
 summary(m11_spamm)
 AIC(m11_spamm)
 moran.test(resid(m11_spamm),listw =listw)
 
 m12_spamm<-fitme(change_in_treeline_elevation~dist_coast+
-                   Stations_After_Treeline+Lat_scaled*Long_scaled +
+                   Stations_After_Treeline+Lat*Long +
                    Matern(1|Long +Lat), data = regs, method = "REML")
 summary(m12_spamm)
 AIC(m12_spamm)
 moran.test(resid(m12_spamm),listw =listw)
 
 m13_spamm<-fitme(change_in_treeline_elevation~dist_coast+
-                   Direction+Lat_scaled+Long_scaled +
+                   Direction+Lat+Long +
                    Matern(1|Long +Lat), data = regs, method = "REML")
 summary(m13_spamm)
 AIC(m13_spamm)
 moran.test(resid(m13_spamm),listw =listw)
 
 m14_spamm<-fitme(change_in_treeline_elevation~dist_coast+
-                   Direction+Lat_scaled*Long_scaled +
+                   Direction+Lat*Long +
                    Matern(1|Long +Lat), data = regs, method = "REML")
 summary(m14_spamm)
 AIC(m14_spamm)
@@ -277,7 +277,7 @@ moran.test(resid(m14_spamm),listw =listw)
 
 m15_spamm<-fitme(change_in_treeline_elevation~dist_coast+
                    Direction+Stations_After_Treeline+
-                   Lat_scaled+Long_scaled +Matern(1|Long +Lat), 
+                   Lat+Long +Matern(1|Long +Lat), 
                  data = regs, method = "REML")
 summary(m15_spamm)
 AIC(m15_spamm)
@@ -285,7 +285,7 @@ moran.test(resid(m15_spamm),listw =listw)
 
 m16_spamm<-fitme(change_in_treeline_elevation~dist_coast+
                    Direction+Stations_After_Treeline+
-                   Lat_scaled*Long_scaled +Matern(1|Long +Lat), 
+                   Lat*Long +Matern(1|Long +Lat), 
                  data = regs, method = "REML")
 summary(m16_spamm)
 AIC(m16_spamm)
@@ -558,8 +558,8 @@ aic_values_only <- aic_values[2, ]
 delta_AIC <-aic_values_only - min(aic_values_only) # calculate delta AIC
 AIC_weight <-exp(-0.5 * delta_AIC) / 
   sum(exp(-0.5 * delta_AIC)) #calculate AIC weights
-m8_terms <- c("Stations_After_Treeline + Direction + Lat_scaled * Long_scaled")
-m2_spamm_terms <- c("Lat_scaled * Long_scaled")
+m8_terms <- c("Stations_After_Treeline + Direction + Lat * Long")
+m2_spamm_terms <- c("Lat * Long")
 m9_pcnm_terms <- c("PCNM1 + PCNM2 + dist_coast")
 terms<- c(m8_terms,m2_spamm_terms,m9_pcnm_terms) # terms for table calrity
 comparison_table <- data.frame(
