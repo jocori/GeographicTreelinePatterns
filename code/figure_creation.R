@@ -1,3 +1,4 @@
+png("figures/figure5.png")
 regs_plot %>%
   ggplot(aes(x = Lat, y = change_in_treeline_elevation, color = Long)) + 
   geom_point(size = 3, alpha = 0.7) + 
@@ -9,7 +10,7 @@ regs_plot %>%
         axis.text = element_text(family = "sans"), 
         axis.ticks = element_line(),
         axis.title = element_text(size = 13, family = "sans"))
-
+dev.off()
 #popocatepetl
 dat<- read.csv("data/20231208_Averages.csv")
 #popo <- dat[dat$Name == "Volcan Popocatepetl",]
@@ -33,6 +34,7 @@ popo_summary <- popo_raw_data %>%
   summarize(Mean_NDVI = mean(NDVI, na.rm = TRUE), .groups = "drop")
 
 # Plot with raw data points and summary line
+png(filename = "figures/figure2b.png")
 ggplot() +
   # Raw data points (transparent)
   geom_point(data = popo_raw_data, aes(x = Period, y = NDVI), alpha = 0.3, color = "gray", size = 2) +
@@ -51,4 +53,35 @@ ggplot() +
             axis.text = element_text(family = "sans"), 
             axis.ticks = element_line(),
             axis.title = element_text(size = 13, family = "sans"))
+dev.off()
 
+regs<-regs[,-c(20:24)]
+second_highest <- regs %>%
+  arrange(desc(change_in_treeline_elevation)) %>%  # Sort by change_in_treeline in descending order
+  slice(3)  # Select the second row
+
+# Display the corresponding Peak
+second_highest$Peak
+regs[regs$Peak == "Malinche",]
+# Filter data for Cerro Chirippo
+malin_data <- dat %>%
+  filter(Name == "Malinche") %>%
+  select(elevation, Avg8488, Avg1317) %>%
+  pivot_longer(cols = c(Avg8488, Avg1317), names_to = "Period", values_to = "NDVI")
+png(filename = "figures/figure2b.png", width = 17, units = "cm", height = 11,res = 300)
+# Plot with regression lines
+ggplot(malin_data, aes(x = elevation, y = NDVI, color = Period)) +
+  geom_point(alpha = 0.4) +  # Plot raw data points
+  geom_smooth(method = "lm", se = FALSE) +  # Add regression lines
+  scale_color_manual(values = c("Avg8488" = "darkred", "Avg1317" = "deepskyblue2"), 
+                     labels = c("Avg8488" = "1984-1988", "Avg1317" = "2013-2017")) +
+  theme_minimal() +
+  theme(panel.grid = element_blank(), axis.line = 
+          element_line(colour = "black", linewidth = 0.25), 
+        axis.text = element_text(family = "sans", color = "black"), 
+        axis.ticks = element_line(color = "black"),
+        title = element_blank())
+dev.off()
+chir<-dat[dat$Name == "Cerro Chirippo",]
+chir<-chir[,c(3,11,14:16)]
+write.csv(chir,"data/chirippo.csv")
