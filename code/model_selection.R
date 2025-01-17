@@ -1,5 +1,9 @@
 #set working directory
 setwd("~/Desktop/KU/Projects/GeographicTreelinePatterns")
+# Create results directory if it doesn't exist
+if (!dir.exists("results")) {
+  dir.create("results")
+}
 #load in packages
 library(dplyr)
 library(lme4)
@@ -120,6 +124,56 @@ moran.test(resid(m16),listw =listw)
 mods<-list(m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12,m13,m14,m15,m16)
 aictab(cand.set = mods)
 confint(m8) #significant interaction between long and lat
+
+# Helper function to format numbers
+format_numeric <- function(x) {
+  format(x, digits = 4, scientific = TRUE)
+}
+
+# Define model terms for lmer models
+lmer_terms <- c(
+  "Lat_scaled + Long_scaled",
+  "Lat_scaled * Long_scaled",
+  "Lat_scaled + Long_scaled + Stations_After_Treeline",
+  "Stations_After_Treeline + Lat_scaled * Long_scaled",
+  "Lat_scaled + Long_scaled + Direction",
+  "Direction + Lat_scaled * Long_scaled",
+  "Lat_scaled + Long_scaled + Stations_After_Treeline + Direction",
+  "Stations_After_Treeline + Direction + Lat_scaled * Long_scaled",
+  "Lat_scaled + Long_scaled + dist_coast",
+  "dist_coast + Lat_scaled * Long_scaled",
+  "dist_coast + Stations_After_Treeline + Lat_scaled + Long_scaled",
+  "dist_coast + Stations_After_Treeline + Lat_scaled * Long_scaled",
+  "dist_coast + Direction + Lat_scaled + Long_scaled",
+  "dist_coast + Direction + Lat_scaled * Long_scaled",
+  "dist_coast + Direction + Stations_After_Treeline + Lat_scaled + Long_scaled",
+  "dist_coast + Direction + Stations_After_Treeline + Lat_scaled * Long_scaled"
+)
+
+# Calculate delta AIC and weights
+lmer_aic_values <- sapply(mods[1:16], AIC)
+delta_aic_lmer <- lmer_aic_values - min(lmer_aic_values)
+aic_weights_lmer <- exp(-0.5 * delta_aic_lmer) / sum(exp(-0.5 * delta_aic_lmer))
+
+# Create the AIC table
+lmer_aic_table <- data.frame(
+  Model = paste0("m", 1:16),
+  Terms = lmer_terms,
+  AIC = format_numeric(lmer_aic_values),
+  Delta_AIC = format_numeric(delta_aic_lmer),
+  AIC_Weight = format_numeric(aic_weights_lmer)
+)
+
+# Sort by AIC
+lmer_aic_table <- lmer_aic_table[order(as.numeric(lmer_aic_table$AIC)), ]
+
+# Save to CSV
+write.csv(
+  lmer_aic_table,
+  file = "results/lmer_AIC.csv",
+  row.names = FALSE
+)
+
 
 ## spatial mixed models 
 #Fit a spatially correlated random effect to check consistency
@@ -246,28 +300,38 @@ aic_values <- sapply(mods_spamm, extractAIC)
 # Extract edf and AIC values from the aic_values matrix
 edf_values <- aic_values["edf", ]
 aic_values_only <- aic_values["AIC", ]
-
+spamm_terms <- lmer_terms
+delta_AIC_spamm <-aic_values_only - min(aic_values_only) # calculate delta AIC
+AIC_weight_spamm <-exp(-0.5 * delta_AIC_spamm) / 
+  sum(exp(-0.5 * delta_AIC_spamm)) #calculate AIC weights
 # Create a data frame
 model_names <- paste0("m", 1:16, "_spamm")
 comparison_table <- data.frame(
   Model = model_names,
+  Terms = spamm_terms,
   edf = edf_values,
-  AIC = aic_values_only
+  AIC = format_numeric(aic_values_only),
+  Delta_AIC = format_numeric(delta_AIC_spamm),
+  Weight = format_numeric(AIC_weight_spamm)
 )
 
 
 # Print the resulting table
 print(comparison_table)
-# calculate delta AIC
-comparison_table$delta_AIC <- comparison_table$AIC - min(comparison_table$AIC)
 
-# calculate AIC weights
-comparison_table$AIC_weight <- exp(-0.5 * comparison_table$delta_AIC) / 
-  sum(exp(-0.5 * comparison_table$delta_AIC))
-print(comparison_table)
-
+# Sort by AIC
+comparison_table <- comparison_table[order(as.numeric(comparison_table$AIC)), ]
+# Save to CSV
+write.csv(
+  comparison_table,
+  file = "results/spamm_AIC.csv",
+  row.names = FALSE
+)
 #best model is m2_spamm
 confint(m2_spamm, parm = names(fixef(m2_spamm))) #significant interaction
+
+
+
 
 
 ## Eigenvector Filtering or PCNM
@@ -378,9 +442,59 @@ moran.test(resid(m16_pcnm),listw =listw)
 mods_pcnm<-list(m1_pcnm,m2_pcnm,m3_pcnm,m4_pcnm,m5_pcnm,
            m6_pcnm,m7_pcnm,m8_pcnm,m9_pcnm,m10_pcnm,
            m11_pcnm,m12_pcnm,m13_pcnm,m14_pcnm,m15_pcnm,m16_pcnm)
-aictab(cand.set = mods_pcnm)
+
+#aictab(cand.set = mods_pcnm)
 #model 8 is best
-confint(m8_pcnm) #only PCNM 1 is significant
+#confint(m8_pcnm) #only PCNM 1 is significant
+# Define terms for pcnm models
+pcnm_terms <- c(
+  "PCNM1 + PCNM2",
+  "PCNM1 * PCNM2",
+  "Stations_After_Treeline + PCNM1 + PCNM2",
+  "Stations_After_Treeline + PCNM1 * PCNM2",
+  "PCNM1 + PCNM2 + Direction",
+  "Direction + PCNM1 * PCNM2",
+  "PCNM1 + PCNM2 + Stations_After_Treeline + Direction",
+  "Stations_After_Treeline + Direction + PCNM1 * PCNM2",
+  "PCNM1 + PCNM2 + dist_coast",
+  "dist_coast + PCNM1 * PCNM2",
+  "dist_coast + PCNM1 + PCNM2 + Stations_After_Treeline",
+  "dist_coast + Stations_After_Treeline + PCNM1 * PCNM2",
+  "dist_coast + Direction + PCNM1 + PCNM2",
+  "dist_coast + Direction + PCNM1 * PCNM2",
+  "dist_coast + Direction + Stations_After_Treeline + PCNM1 + PCNM2",
+  "dist_coast + Direction + Stations_After_Treeline + PCNM1 * PCNM2"
+)
+# Extract AIC values from the aic_values matrix
+aic_values_pcnm <- sapply(mods_pcnm, extractAIC)
+aic_values_pcnm <-aic_values_pcnm[2,]
+delta_AIC_pcnm <-aic_values_pcnm - min(aic_values_pcnm) # calculate delta AIC
+AIC_weight_pcnm <-exp(-0.5 * delta_AIC_pcnm) / 
+  sum(exp(-0.5 * delta_AIC_pcnm)) #calculate AIC weights
+# Create a data frame
+model_names <- paste0("m", 1:16, "_pcnm")
+comparison_table_pcnm <- data.frame(
+  Model = model_names,
+  Terms = pcnm_terms,
+  AIC = format_numeric(aic_values_pcnm),
+  Delta_AIC = format_numeric(delta_AIC_pcnm),
+  Weight = format_numeric(AIC_weight_pcnm)
+)
+
+
+# Sort by AIC
+comparison_table_pcnm <- comparison_table_pcnm[order(as.numeric(comparison_table_pcnm$AIC)), ]
+
+# Print the resulting table
+print(comparison_table_pcnm)
+
+# Save to CSV
+write.csv(
+  comparison_table_pcnm,
+  file = "results/pcnm_AIC.csv",
+  row.names = FALSE
+)
+
 
 #####################################
 #######best model overall out of linear mixed models, spatial mixed models, and pcnm
@@ -402,44 +516,126 @@ model_names_group3 <- paste0("m", 1:16, "_pcnm")
 # Combine all the model names into one vector
 model_names <- c(model_names_group1, model_names_group2, model_names_group3)
 
-comparison_table <- data.frame(
+
+delta_AIC <-aic_values_only - min(aic_values_only) # calculate delta AIC
+AIC_weight <-exp(-0.5 * delta_AIC) / 
+  sum(exp(-0.5 * delta_AIC)) #calculate AIC weights
+terms<- c(lmer_terms, spamm_terms, pcnm_terms)
+# Create a data frame
+
+comparison_table<- data.frame(
   Model = model_names,
-  edf = edf_values,
-  AIC = aic_values_only
+  Terms = terms,
+  EDF = edf_values,
+  AIC = format_numeric(aic_values_only),
+  Delta_AIC = format_numeric(delta_AIC),
+  Weight = format_numeric(AIC_weight)
 )
+
 
 # Sort by AIC for better comparison
 comparison_table <- comparison_table[order(comparison_table$AIC), ]
 
 # Print the resulting table
 print(comparison_table)
-# calculate delta AIC
-comparison_table$delta_AIC <- comparison_table$AIC - min(comparison_table$AIC)
 
-# calculate AIC weights
-comparison_table$AIC_weight <- exp(-0.5 * comparison_table$delta_AIC) / 
-  sum(exp(-0.5 * comparison_table$delta_AIC))
-print(comparison_table)
+# Save to CSV
+write.csv(
+  comparison_table,
+  file = "results/total_AIC.csv",
+  row.names = FALSE
+)
 
 ######best model out of top models in each category
-mods<-list(m8, m2_spamm, m8_pcnm)
+mods_best<-list(m8, m2_spamm, m9_pcnm)
 model_names <- c("m8","m2_spamm","m8_pcnm")
 # Extract AIC for each model
-aic_values <- sapply(mods, extractAIC)
+aic_values <- sapply(mods_best, extractAIC)
 
 # Extract edf and AIC values from the aic_values matrix
 edf_values <- aic_values[1, ]
 aic_values_only <- aic_values[2, ]
+delta_AIC <-aic_values_only - min(aic_values_only) # calculate delta AIC
+AIC_weight <-exp(-0.5 * delta_AIC) / 
+  sum(exp(-0.5 * delta_AIC)) #calculate AIC weights
+m8_terms <- c("Stations_After_Treeline + Direction + Lat_scaled * Long_scaled")
+m2_spamm_terms <- c("Lat_scaled * Long_scaled")
+m9_pcnm_terms <- c("PCNM1 + PCNM2 + dist_coast")
+terms<- c(m8_terms,m2_spamm_terms,m9_pcnm_terms) # terms for table calrity
 comparison_table <- data.frame(
   Model = model_names,
+  Terms = terms,
   edf = edf_values,
-  AIC = aic_values_only
+  AIC = format_numeric(aic_values_only),
+  Delta_AIC = format_numeric(delta_AIC),
+  Weight = format_numeric(AIC_weight)
 )
 comparison_table <- comparison_table[order(comparison_table$AIC), ]
-comparison_table$delta_AIC <- comparison_table$AIC - min(comparison_table$AIC)
-comparison_table$AIC_weight <- exp(-0.5 * comparison_table$delta_AIC) / 
-  sum(exp(-0.5 * comparison_table$delta_AIC))
-comparison_table
-#m2 spamm is contributing 99.99% of the variation...suspicious????
-plot(residuals(m2_spamm))
 
+comparison_table
+#m2 spamm is contributing 99.99% of the variation... not suspicious because it is fine in its own I think
+plot(residuals(m2_spamm)) #residuals are fine
+
+# Save to CSV
+write.csv(
+  comparison_table,
+  file = "results/best_AIC.csv",
+  row.names = FALSE
+)
+
+##### make tables for the 3 best models (one of each analysis type: liner, spatial, and pcnm)
+# Helper function to extract model output
+extract_model_output <- function(model, model_name) {
+  # Extract summary
+  summary_output <- summary(model)
+  coefficients <- summary_output$coefficients
+  
+  # Extract confidence intervals
+  conf_intervals <- confint(model, parm = names(fixef(model)))  # Fixed effects only
+  
+  # Ensure row alignment by using only fixed-effect terms
+  terms <- rownames(coefficients)
+  ci_terms <- rownames(conf_intervals)
+  matching_terms <- intersect(terms, ci_terms)
+  
+  # Subset coefficients and confidence intervals
+  coefficients <- coefficients[matching_terms, , drop = FALSE]
+  conf_intervals <- conf_intervals[matching_terms, , drop = FALSE]
+  
+  # Create a data frame with the required columns
+  output_table <- data.frame(
+    Terms = matching_terms,
+    Estimate = format_numeric(coefficients[, "Estimate"]),
+    Std_Error = format_numeric(coefficients[, "Std. Error"]),
+    T_Value = format_numeric(coefficients[, "t value"]),
+    CI_Lower = format_numeric(conf_intervals[, 1]),
+    CI_Upper = format_numeric(conf_intervals[, 2])
+  )
+  
+  # Save the output table to the results folder
+  write.csv(
+    output_table,
+    file = paste0("results/", model_name, "_output.csv"),
+    row.names = FALSE
+  )
+  
+  return(output_table)
+}
+
+# Extract and save outputs for the three best models
+m8_output <- extract_model_output(m8, "m8")
+m9_pcnm_output <- extract_model_output(m9_pcnm, "m9_pcnm")
+
+## USING THIS SPAMM MODEL TO REPORT OUTPUT, MAXIMIZING P_V IN CI CALCULATION, A LIKLIHOOD ESTIMATE
+#refit model with suggested parameters
+# Extract suggested parameters for refitting
+fixed_effects <- fixef(m2_spamm)
+best_fit_params <- confint(m2_spamm,parm = names(fixed_effects))$confint_best_fit
+
+# Refit the model with these parameters
+refitted_model <- update(m2_spamm, init = best_fit_params)
+
+# Use the refitted model for analysis
+summary(refitted_model)
+confint(refitted_model, parm = names(fixed_effects))
+###HAD TO MANUALLY TYPE TABLE FOR THE SPAMM MODEL
