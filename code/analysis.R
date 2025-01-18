@@ -144,6 +144,7 @@ setwd("~/Desktop/KU/Projects/GeographicTreelinePatterns")
 library(dplyr)
 library(lme4)
 library(AICcmodavg)
+library(ggplot2)
 # read in data
 regs_full<-read.csv("data/Regressions_28Oct.csv", header = TRUE)
 count(regs_full[regs_full$Significance >= 0.05,])
@@ -163,6 +164,7 @@ regs <- regs %>% filter(Year %in% c("Avg8488", "Avg9802", "Avg1317"))
 #Which mountains are excluded now?
 x1<-unique(regs$Peak)
 x2<-unique(regs_full$Peak)
+setdiff(x1,x2)
 # no mountains are completely excluded! 
 
 #remove extraneous columns
