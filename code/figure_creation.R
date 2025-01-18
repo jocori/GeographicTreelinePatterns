@@ -1,8 +1,17 @@
+setwd("~/Desktop/KU/Projects/GeographicTreelinePatterns")
+regs<- read.csv("data/Regressions12Nov24.csv")
+#get the slope for lines on the graph
+m1<-lm(regs$change_in_treeline_elevation~regs$Lat)
+summary(m1)
+m2<-lm(regs$change_in_treeline_elevation~regs$Long)
+summary(m2)
 png("figures/figure5.png")
-regs_plot %>%
+regs %>%
   ggplot(aes(x = Lat, y = change_in_treeline_elevation, color = Long)) + 
   geom_point(size = 3, alpha = 0.7) + 
   scale_color_gradient(name = "Longitude", low = "blue", high = "red") + 
+  geom_abline(slope = -14.63, intercept = 611.69, colour = "#a8a2af", lwd = 1.5) +
+  geom_abline(slope = 14.313, intercept = 1636.478, colour = "#5c3494", lwd = 1.5) +
   xlab("Latitude") + 
   ylab("Change in Treeline Elevation (2017 - 1984)") + theme_minimal() +
   theme(panel.grid = element_blank(), axis.line = 
@@ -10,7 +19,9 @@ regs_plot %>%
         axis.text = element_text(family = "sans"), 
         axis.ticks = element_line(),
         axis.title = element_text(size = 13, family = "sans"))
+
 dev.off()
+
 #popocatepetl
 dat<- read.csv("data/20231208_Averages.csv")
 #popo <- dat[dat$Name == "Volcan Popocatepetl",]
