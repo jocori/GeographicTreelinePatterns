@@ -19,6 +19,7 @@ regs <- regs %>% filter(Year %in% c("Avg8488", "Avg9802", "Avg1317"))
 #Which mountains are excluded now?
 x1<-unique(regs$Peak)
 x2<-unique(regs_full$Peak)
+setdiff(x1,x2)
 # no mountains are completely excluded! 
 
 #remove extraneous columns
@@ -35,6 +36,8 @@ past<-regs[regs$Year == "Avg8488",]
 
 #present day regression equation
 present$present_NDVI<-(present$Treeline_elevation*present$Slope) + present$Intercept
+
+
 
 #plug present day NDVI at treesbegin value into past regression equation to calculate past elevation
 #y = mx + b....x = y-b/m...(present ndvi - intercept)/slope
