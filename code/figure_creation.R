@@ -10,8 +10,8 @@ regs %>%
   ggplot(aes(x = Lat, y = change_in_treeline_elevation, color = Long)) + 
   geom_point(size = 3, alpha = 0.7) + 
   scale_color_gradient(name = "Longitude", low = "blue", high = "red") + 
-  geom_abline(slope = -14.63, intercept = 611.69, colour = "#a8a2af", lwd = 1.5) +
-  geom_abline(slope = 14.313, intercept = 1636.478, colour = "#5c3494", lwd = 1.5) +
+  #geom_abline(slope = -14.63, intercept = 611.69, colour = "orange", lwd = 1.5) +
+  #geom_abline(slope = 14.313, intercept = 1636.478, colour = "black", lwd = 1.5) +
   xlab("Latitude") + 
   ylab("Change in Treeline Elevation (2017 - 1984)") + theme_minimal() +
   theme(panel.grid = element_blank(), axis.line = 
@@ -21,6 +21,59 @@ regs %>%
         axis.title = element_text(size = 13, family = "sans"))
 
 dev.off()
+library(dplyr)
+library(ggplot2)
+#alternative figure 5
+
+library(ggplot2)
+library(patchwork)
+
+# Create individual plots
+lat_plot <- regs %>%
+  ggplot(aes(x = Lat, y = change_in_treeline_elevation)) +
+  geom_point(colour = "#a845b9") +
+  geom_abline(slope = -14.63, intercept = 611.69, colour = "black", lwd = 0.75)+
+  labs(x = "Latitude", y = "Change in Treeline Elevation", title = "Latitude vs Treeline") +
+  theme_minimal() + 
+  theme(panel.grid = element_blank(), axis.line = 
+                           element_line(colour = "black", linewidth = 0.25), 
+                         axis.text = element_text(family = "sans"), 
+                         axis.ticks = element_line(),
+                         plot.title = element_blank(),
+                         axis.title = element_text(size = 13, family = "sans"))
+
+long_plot <- regs %>%
+  ggplot(aes(x = Long, y = change_in_treeline_elevation)) +
+  geom_point(colour = "#5b6c65") +
+  labs(x = "Longitude", y = element_blank(), title = "Longitude vs Treeline") +
+  geom_abline(slope = 14.313, intercept = 1636.478, colour = "black", lwd = 0.75, )+
+  theme_minimal() +
+  theme(panel.grid = element_blank(), axis.line = 
+          element_line(colour = "black", linewidth = 0.25), 
+        axis.text = element_text(family = "sans"), 
+        axis.ticks = element_line(),
+        plot.title = element_blank(),
+        axis.title = element_text(size = 13, family = "sans"))
+
+# Combine the plots
+lat_plot + long_plot  # Combines the two plots side by side
+
+#distance to coast
+regs %>%
+  ggplot(aes(x = dist_coast, y = Long)) + 
+  geom_point(size = 3, alpha = 0.7) + 
+  #geom_abline(slope = -14.63, intercept = 611.69, colour = "orange", lwd = 1.5) +
+  #geom_abline(slope = 14.313, intercept = 1636.478, colour = "black", lwd = 1.5) +
+  xlab("Distance to Coast (m)") + 
+  ylab("Longitude") + theme_minimal() +
+  theme(panel.grid = element_blank(), axis.line = 
+          element_line(colour = "black", linewidth = 0.25), 
+        axis.text = element_text(family = "sans"), 
+        axis.ticks = element_line(),
+        axis.title = element_text(size = 13, family = "sans"))
+
+
+
 
 #popocatepetl
 dat<- read.csv("data/20231208_Averages.csv")
