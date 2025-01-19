@@ -1,34 +1,22 @@
+#set working directory
 setwd("~/Desktop/KU/Projects/GeographicTreelinePatterns")
 regs<- read.csv("data/Regressions12Nov24.csv")
+
+#load packages
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(patchwork)
+# figure 5
+
 #get the slope for lines on the graph
 m1<-lm(regs$change_in_treeline_elevation~regs$Lat)
 summary(m1)
 m2<-lm(regs$change_in_treeline_elevation~regs$Long)
 summary(m2)
+
+# create latitude plot
 png("figures/figure5.png")
-regs %>%
-  ggplot(aes(x = Lat, y = change_in_treeline_elevation, color = Long)) + 
-  geom_point(size = 3, alpha = 0.7) + 
-  scale_color_gradient(name = "Longitude", low = "blue", high = "red") + 
-  #geom_abline(slope = -14.63, intercept = 611.69, colour = "orange", lwd = 1.5) +
-  #geom_abline(slope = 14.313, intercept = 1636.478, colour = "black", lwd = 1.5) +
-  xlab("Latitude") + 
-  ylab("Change in Treeline Elevation (2017 - 1984)") + theme_minimal() +
-  theme(panel.grid = element_blank(), axis.line = 
-          element_line(colour = "black", linewidth = 0.25), 
-        axis.text = element_text(family = "sans"), 
-        axis.ticks = element_line(),
-        axis.title = element_text(size = 13, family = "sans"))
-
-dev.off()
-library(dplyr)
-library(ggplot2)
-#alternative figure 5
-
-library(ggplot2)
-library(patchwork)
-
-# Create individual plots
 lat_plot <- regs %>%
   ggplot(aes(x = Lat, y = change_in_treeline_elevation)) +
   geom_point(colour = "#a845b9") +
@@ -41,7 +29,7 @@ lat_plot <- regs %>%
                          axis.ticks = element_line(),
                          plot.title = element_blank(),
                          axis.title = element_text(size = 13, family = "sans"))
-
+#create longitude plot
 long_plot <- regs %>%
   ggplot(aes(x = Long, y = change_in_treeline_elevation)) +
   geom_point(colour = "#5b6c65") +
@@ -55,10 +43,12 @@ long_plot <- regs %>%
         plot.title = element_blank(),
         axis.title = element_text(size = 13, family = "sans"))
 
-# Combine the plots
+#combine the plots
 lat_plot + long_plot  # Combines the two plots side by side
 
-#distance to coast
+dev.off()
+
+#distance to coast vs longitude
 regs %>%
   ggplot(aes(x = dist_coast, y = Long)) + 
   geom_point(size = 3, alpha = 0.7) + 
@@ -75,49 +65,8 @@ regs %>%
 
 
 
-#popocatepetl
+#malinche
 dat<- read.csv("data/20231208_Averages.csv")
-#popo <- dat[dat$Name == "Volcan Popocatepetl",]
-
-#popo_data<-popo %>%
- # summarise(Period = c("Avg8488", "Avg1317"),
-  #          Mean_NDVI = c(mean(Avg8488, na.rm = TRUE), mean(Avg1317, na.rm = TRUE)))
-
-
-###next attempt
-library(tidyverse)
-# Reshape the data for raw NDVI points
-popo_raw_data <- dat %>%
-  filter(Name == "Volcan Popocatepetl") %>%
-  select(Avg8488, Avg1317) %>%
-  pivot_longer(cols = c(Avg8488, Avg1317), names_to = "Period", values_to = "NDVI")
-
-# Prepare the summary data for the line plot
-popo_summary <- popo_raw_data %>%
-  group_by(Period) %>%
-  summarize(Mean_NDVI = mean(NDVI, na.rm = TRUE), .groups = "drop")
-
-# Plot with raw data points and summary line
-png(filename = "figures/figure2b.png")
-ggplot() +
-  # Raw data points (transparent)
-  geom_point(data = popo_raw_data, aes(x = Period, y = NDVI), alpha = 0.3, color = "gray", size = 2) +
-  # Line and point plot for mean NDVI
-  geom_line(data = popo_summary, aes(x = Period, y = Mean_NDVI, group = 1), size = 1, color = "maroon") +
-  geom_point(data = popo_summary, aes(x = Period, y = Mean_NDVI), size = 3, color = "darkred") +
-  ylab("Mean NDVI") +
-  xlab("Period") +
-  ggtitle("Change in Greenness (NDVI) for Volcán Popocatepetl") +
-  scale_x_discrete(
-    limits = c("Avg8488", "Avg1317"),  # Specifies the order
-    labels = c("Avg8488" = "1984-1988", "Avg1317" = "2013-2017")  # Custom labels
-  ) + theme_minimal() + 
-  theme(panel.grid = element_blank(), axis.line = 
-              element_line(colour = "black", linewidth = 0.25), 
-            axis.text = element_text(family = "sans"), 
-            axis.ticks = element_line(),
-            axis.title = element_text(size = 13, family = "sans"))
-dev.off()
 
 regs<-regs[,-c(20:24)]
 second_highest <- regs %>%
@@ -146,6 +95,8 @@ ggplot(malin_data, aes(x = elevation, y = NDVI, color = Period)) +
         axis.ticks = element_line(color = "black"),
         title = element_blank())
 dev.off()
-chir<-dat[dat$Name == "Cerro Chirippo",]
-chir<-chir[,c(3,11,14:16)]
-write.csv(chir,"data/chirippo.csv")
+
+
+#chir<-dat[dat$Name == "Cerro Chirippo",]
+#chir<-chir[,c(3,11,14:16)]
+#write.csv(chir,"data/chirippo.csv")
