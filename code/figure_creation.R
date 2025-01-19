@@ -14,38 +14,58 @@ m1<-lm(regs$change_in_treeline_elevation~regs$Lat)
 summary(m1)
 m2<-lm(regs$change_in_treeline_elevation~regs$Long)
 summary(m2)
+#########################
+library(ggplot2)
+library(patchwork)
+
+#Figure 5
+# Define a function to format coordinates with degree symbols
+format_lat <- function(lat) {
+  ifelse(lat >= 0, paste0(lat, "° N"), paste0(abs(lat), "° S"))
+}
+
+format_long <- function(long) {
+  ifelse(long >= 0, paste0(long, "° E"), paste0(abs(long), "° W"))
+}
+
 
 # create latitude plot
-png("figures/figure5.png")
+png("figures/figure5.png", width = 7.5, height = 5, units = "in", res = 300)
 lat_plot <- regs %>%
   ggplot(aes(x = Lat, y = change_in_treeline_elevation)) +
   geom_point(colour = "#a845b9") +
-  geom_abline(slope = -14.63, intercept = 611.69, colour = "black", lwd = 0.75)+
-  labs(x = "Latitude", y = "Change in Treeline Elevation", title = "Latitude vs Treeline") +
-  theme_minimal() + 
-  theme(panel.grid = element_blank(), axis.line = 
-                           element_line(colour = "black", linewidth = 0.25), 
-                         axis.text = element_text(family = "sans"), 
-                         axis.ticks = element_line(),
-                         plot.title = element_blank(),
-                         axis.title = element_text(size = 13, family = "sans"))
-#create longitude plot
+  geom_abline(slope = -14.63, intercept = 611.69, colour = "black", lwd = 0.75) +
+  labs(x = "Latitude", y = "Change in Treeline Elevation") +
+  scale_x_continuous(labels = format_lat) +  # Apply latitude formatting
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    axis.line = element_line(colour = "black", linewidth = 0.25),
+    axis.text = element_text(family = "sans"),
+    axis.ticks = element_line(),
+    plot.title = element_blank(),
+    axis.title = element_text(size = 13, family = "sans")
+  )
+
+# Create the Longitude plot
 long_plot <- regs %>%
   ggplot(aes(x = Long, y = change_in_treeline_elevation)) +
   geom_point(colour = "#5b6c65") +
-  labs(x = "Longitude", y = element_blank(), title = "Longitude vs Treeline") +
-  geom_abline(slope = 14.313, intercept = 1636.478, colour = "black", lwd = 0.75, )+
+  geom_abline(slope = 14.313, intercept = 1636.478, colour = "black", lwd = 0.75) +
+  labs(x = "Longitude", y = element_blank()) +
+  scale_x_continuous(labels = format_long) +  # Apply longitude formatting
   theme_minimal() +
-  theme(panel.grid = element_blank(), axis.line = 
-          element_line(colour = "black", linewidth = 0.25), 
-        axis.text = element_text(family = "sans"), 
-        axis.ticks = element_line(),
-        plot.title = element_blank(),
-        axis.title = element_text(size = 13, family = "sans"))
+  theme(
+    panel.grid = element_blank(),
+    axis.line = element_line(colour = "black", linewidth = 0.25),
+    axis.text = element_text(family = "sans"),
+    axis.ticks = element_line(),
+    plot.title = element_blank(),
+    axis.title = element_text(size = 13, family = "sans")
+  )
 
-#combine the plots
+# Combine the plots
 lat_plot + long_plot  # Combines the two plots side by side
-
 dev.off()
 
 #distance to coast vs longitude
