@@ -110,12 +110,14 @@ vif(m14)
 moran.test(resid(m14),listw =listw)
 m15<-lmer(change_in_treeline_elevation~dist_coast+Direction+Stations_After_Treeline+Lat+Long +(1|Peak_ID), data = regs)
 summary(m15)
+confint(m15)
 AIC(m15)
 vif(m15)
 moran.test(resid(m15),listw =listw)
 m16<-lmer(change_in_treeline_elevation~dist_coast+Direction+
             Stations_After_Treeline+Lat*Long +(1|Peak_ID), data = regs)
 summary(m16)
+confint(m16)
 AIC(m16)
 vif(m16)
 moran.test(resid(m16),listw =listw)
@@ -280,6 +282,7 @@ m15_spamm<-fitme(change_in_treeline_elevation~dist_coast+
                    Lat+Long +Matern(1|Long +Lat), 
                  data = regs, method = "REML")
 summary(m15_spamm)
+confint(m15_spamm, parm = names(fixef(m15_spamm)))
 AIC(m15_spamm)
 moran.test(resid(m15_spamm),listw =listw)
 
@@ -288,6 +291,7 @@ m16_spamm<-fitme(change_in_treeline_elevation~dist_coast+
                    Lat*Long +Matern(1|Long +Lat), 
                  data = regs, method = "REML")
 summary(m16_spamm)
+confint(m16_spamm, parm = names(fixef(m16_spamm)))
 AIC(m16_spamm)
 moran.test(resid(m16_spamm),listw =listw)
 #best spatial mixed model
