@@ -100,3 +100,16 @@ unique(regs$Peak)
 unique(regs_full$Peak)
 
 write.csv(regs, "data/regsJan2025.csv")
+regs<- read.csv("data/regsJan2025.csv")
+dist_coast<- read.csv("data/Regressions12Nov24.csv")
+
+# Add only the 'dist_coast' column to 'regs'
+regs <- regs %>%
+  left_join(dist_coast %>% select(Peak, Direction, dist_coast), by = c("Peak", "Direction"))
+
+#Add columns for scaled longitude and latitude
+regs <- regs %>%
+  mutate(Lat_scaled = scale(Lat),
+         Long_scaled = scale(Long))
+#save final dataset
+write.csv(regs, "data/regs_final22jan25.csv")
