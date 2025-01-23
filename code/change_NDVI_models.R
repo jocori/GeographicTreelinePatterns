@@ -44,6 +44,7 @@ summary(regs$change_in_treeline_elevation)
 #linear mixed models
 m1<-lmer(change_in_treeline_NDVI~Lat +Long + (1|Peak_ID), data = regs)
 summary(m1)
+confint(m1)
 AIC(m1)
 vif(m1)
 moran.test(resid(m1),listw =listw)
@@ -188,6 +189,7 @@ write.csv(
 m1_spamm <- fitme(change_in_treeline_NDVI~Lat +Long+ 
                     Matern(1|Long +Lat), data = regs, method = "REML")
 summary(m1_spamm)
+confint(m1_spamm, parm = names(fixef(m1_spamm)))
 AIC(m1_spamm)
 moran.test(resid(m1_spamm),listw =listw)
 
