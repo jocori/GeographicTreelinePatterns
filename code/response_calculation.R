@@ -80,7 +80,7 @@ regs <- regs %>%
     change_in_treeline_elevation = present_elevation[Year == "Avg1317"] - past_elevation[Year == "Avg8488"]
   ) %>%
   ungroup()
-
+write.csv(regs, "data/full_regs_for_figure6.csv")
 #remove present elevation, past elevation, present NDVI, and year columns
 regs<-regs[,-c(3,10,12:13)]
 
