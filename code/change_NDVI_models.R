@@ -15,6 +15,8 @@ library(sp)
 library(spaMM) # spatial mixed models
 library(RSpectra) # for fast calculation of extreme eigenvector in spamm models
 library(xtable) #for creating latex table
+library(broom.mixed) #for adding random effects to latex table
+library(texreg)
 #read in data
 regs<- read.csv("data/regsJan2025.csv")
 dist_coast<- read.csv("data/Regressions12Nov24.csv")
@@ -27,6 +29,8 @@ regs <- regs %>%
 regs <- regs %>%
   mutate(Lat_scaled = scale(Lat),
          Long_scaled = scale(Long))
+#save final dataset
+write.csv(regs, "data/regs_final22jan25.csv")
 
 #calculate k nearest neighbors for moran's test (test for spatial autocorrelation)
 coords <- as.matrix(cbind(regs$Long, regs$Lat))
@@ -569,3 +573,166 @@ summary(m8)
 confint(m8)
 
 ## now I need model output tables for m1, m1_spamm, and m8
+
+###m1
+
+# Extract fixed effects summary from the model
+fixed_effects_df <- as.data.frame(coef(summary(m1)))
+
+# Add confidence intervals if needed
+conf_intervals <- confint(m1)
+conf_intervals<-conf_intervals[3:5,]
+
+# Add confidence intervals to the fixed effects table
+fixed_effects_df$CI.Lower <- conf_intervals[, 1]
+fixed_effects_df$CI.Upper <- conf_intervals[, 2]
+
+# Rename columns for clarity
+colnames(fixed_effects_df) <- c("Estimate", "Std.Error", "t.value", "CI.Lower", "CI.Upper")
+
+#extract random effects
+random_effects <- VarCorr(m1)
+random_effects_summary <- as.data.frame(random_effects)
+
+# Extract random intercept variance and standard deviation
+random_variance <- random_effects_summary$vcov[1]
+random_sd <- sqrt(random_variance)
+
+# Create a data frame for random effects
+random_effects_df <- data.frame(
+  Term = c("Random intercept (variance)", "Random intercept (std. dev.)"),
+  Estimate = c(random_variance, random_sd),
+  Std.Error = NA,  # Random effects typically don't have standard errors
+  t.value = NA,    # No t-value for random effects
+  CI.Lower = NA,   # No confidence intervals for random effects
+  CI.Upper = NA
+)
+
+#combine fixed and random effects into single table
+# Add term names to the fixed effects
+fixed_effects_df$Term <- rownames(fixed_effects_df)
+
+# Combine fixed and random effects
+combined_effects <- rbind(
+  fixed_effects_df[, c("Term", "Estimate", "Std.Error", "t.value", "CI.Lower", "CI.Upper")],
+  random_effects_df
+)
+
+# Convert to LaTeX table
+latex_table <- xtable(
+  combined_effects,
+  caption = "Model Summary with Fixed and Random Effects. Best linear mixed model with change in ndvi as response variable",
+  label = "tab:model_summary"
+)
+
+# Save as a .tex file
+sink("model_summary_table_NDVI_m1.tex")
+print(latex_table, include.rownames = FALSE)
+sink()
+
+#### m1_spamm
+# Extract fixed effects summary from the model
+fixed_effects_df <- as.data.frame(summary(m1_spamm, details = FALSE, verbose = FALSE)$beta_table)
+
+# Add confidence intervals if needed
+conf_intervals <- confint(m1_spamm, parm = names(fixef(m1_spamm)))
+conf_intervals<-attr(conf_intervals,"table")
+
+# Add confidence intervals to the fixed effects table
+fixed_effects_df$CI.Lower <- conf_intervals[, 1]
+fixed_effects_df$CI.Upper <- conf_intervals[, 2]
+
+# Rename columns for clarity
+colnames(fixed_effects_df) <- c("Estimate", "Std.Error", "t.value", "CI.Lower", "CI.Upper")
+
+#extract random effects
+random_effects <- VarCorr(m1_spamm)
+random_effects_summary <- as.data.frame(random_effects[1,])
+
+# Create a data frame for random effects
+random_effects_df <- data.frame(
+  Term = c("Random intercept (variance)", "Random intercept (std. dev.)"),
+  Estimate = c(random_effects_summary),
+  Std.Error = NA,  # Random effects typically don't have standard errors
+  t.value = NA,    # No t-value for random effects
+  CI.Lower = NA,   # No confidence intervals for random effects
+  CI.Upper = NA
+)
+
+#combine fixed and random effects into single table
+# Add term names to the fixed effects
+fixed_effects_df$Term <- rownames(fixed_effects_df)
+
+# Combine fixed and random effects
+combined_effects <- rbind(
+  fixed_effects_df[, c("Term", "Estimate", "Std.Error", "t.value", "CI.Lower", "CI.Upper")],
+  random_effects_df
+)
+
+# Convert to LaTeX table
+latex_table <- xtable(
+  combined_effects,
+  caption = "Model Summary with Fixed and Random Effects. Best spatial linear mixed model with change in ndvi as response variable",
+  label = "tab:model_summary_m1spamm"
+)
+
+# Save as a .tex file
+sink("model_summary_table_NDVI_m1_spamm.tex")
+print(latex_table, include.rownames = FALSE)
+sink()
+
+### m8
+# Extract fixed effects summary from the model
+fixed_effects_df <- as.data.frame(coef(summary(m8)))
+
+# Add confidence intervals if needed
+conf_intervals <- confint(m8)
+conf_intervals<-conf_intervals[3:5,]
+
+# Add confidence intervals to the fixed effects table
+fixed_effects_df$CI.Lower <- conf_intervals[, 1]
+fixed_effects_df$CI.Upper <- conf_intervals[, 2]
+
+# Rename columns for clarity
+colnames(fixed_effects_df) <- c("Estimate", "Std.Error", "t.value", "CI.Lower", "CI.Upper")
+
+#extract random effects
+random_effects <- VarCorr(m8)
+random_effects_summary <- as.data.frame(random_effects)
+
+# Extract random intercept variance and standard deviation
+random_variance <- random_effects_summary$vcov[1]
+random_sd <- sqrt(random_variance)
+
+# Create a data frame for random effects
+random_effects_df <- data.frame(
+  Term = c("Random intercept (variance)", "Random intercept (std. dev.)"),
+  Estimate = c(random_variance, random_sd),
+  Std.Error = NA,  # Random effects typically don't have standard errors
+  t.value = NA,    # No t-value for random effects
+  CI.Lower = NA,   # No confidence intervals for random effects
+  CI.Upper = NA
+)
+
+#combine fixed and random effects into single table
+# Add term names to the fixed effects
+fixed_effects_df$Term <- rownames(fixed_effects_df)
+
+# Combine fixed and random effects
+combined_effects <- rbind(
+  fixed_effects_df[, c("Term", "Estimate", "Std.Error", "t.value", "CI.Lower", "CI.Upper")],
+  random_effects_df
+)
+
+# Convert to LaTeX table
+latex_table <- xtable(
+  combined_effects,
+  caption = "Model Summary with Fixed and Random Effects. Best linear mixed model from AIC table including all 32 models with change in ndvi as response variable",
+  label = "tab:model_summary_m8", digits = 4, align = c(rep("l",6), display = "G")
+)
+
+# Save as a .tex file
+sink("model_summary_table_NDVI_m8.tex")
+print(latex_table, include.rownames = FALSE)
+sink()
+
