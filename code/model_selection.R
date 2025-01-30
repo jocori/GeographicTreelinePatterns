@@ -16,7 +16,7 @@ library(spaMM) # spatial mixed models
 library(vegan) # PCNM
 library(RSpectra) # for fast calculation of extreme eigenvector in spamm models
 #read in data
-regs<- read.csv("data/Regressions12Nov24.csv")
+regs<- read.csv("data/regs_final22jan25.csv")
 #check for correlation among predictor variables
 numeric_data <- regs[, sapply(regs, is.numeric)]
 correlation_matrix <- cor(numeric_data)
@@ -133,46 +133,48 @@ format_numeric <- function(x) {
 }
 
 # Define model terms for lmer models
+# Define model terms for lmer models
 lmer_terms <- c(
-  "Lat + Long",
-  "Lat * Long",
-  "Lat + Long + Stations_After_Treeline",
-  "Stations_After_Treeline + Lat * Long",
-  "Lat + Long + Direction",
-  "Direction + Lat * Long",
-  "Lat + Long + Stations_After_Treeline + Direction",
-  "Stations_After_Treeline + Direction + Lat * Long",
-  "Lat + Long + dist_coast",
-  "dist_coast + Lat * Long",
-  "dist_coast + Stations_After_Treeline + Lat + Long",
-  "dist_coast + Stations_After_Treeline + Lat * Long",
-  "dist_coast + Direction + Lat + Long",
-  "dist_coast + Direction + Lat * Long",
-  "dist_coast + Direction + Stations_After_Treeline + Lat + Long",
-  "dist_coast + Direction + Stations_After_Treeline + Lat * Long"
+  "Latitude + Longitude",
+  "Latitude x Longitude",
+  "Latitude + Longitude + # Stations After Treeline",
+  "# Stations After Treeline + Latitude x Longitude",
+  "Latitude + Longitude + Direction",
+  "Direction + Latitude x Longitude",
+  "Latitude + Longitude + # Stations After Treeline  + Direction",
+  "# Stations After Treeline  + Direction + Latitude x Longitude",
+  "Latitude + Longitude + Distance to the Coast (m)",
+  "Distance to the Coast (m) + Latitude x Longitude",
+  "Distance to the Coast (m) + # Stations After Treeline  + Latitude + Longitude",
+  "Distance to the Coast (m) + # Stations After Treeline  + Latitude x Longitude",
+  "Distance to the Coast (m) + Direction + Latitude + Longitude",
+  "Distance to the Coast (m) + Direction + Latitude x Longitude",
+  "Distance to the Coast (m) + Direction + # Stations After Treeline  + Latitude + Longitude",
+  "Distance to the Coast (m) + Direction + # Stations After Treeline  + Latitude x Longitude"
 )
 
 # Calculate delta AIC and weights
 lmer_aic_values <- sapply(mods[1:16], AIC)
+#lmer_edf_values <- sapply(mods[1:16], extractAIC)[1,]
 delta_aic_lmer <- lmer_aic_values - min(lmer_aic_values)
 aic_weights_lmer <- exp(-0.5 * delta_aic_lmer) / sum(exp(-0.5 * delta_aic_lmer))
 
 # Create the AIC table
 lmer_aic_table <- data.frame(
-  Model = paste0("m", 1:16),
   Terms = lmer_terms,
   AIC = format_numeric(lmer_aic_values),
   Delta_AIC = format_numeric(delta_aic_lmer),
-  AIC_Weight = format_numeric(aic_weights_lmer)
+  Weight = format_numeric(aic_weights_lmer)
 )
 
 # Sort by AIC
 lmer_aic_table <- lmer_aic_table[order(as.numeric(lmer_aic_table$AIC)), ]
-
+colnames(lmer_aic_table)[colnames(lmer_aic_table) == "Delta_AIC"] <- "Delta AIC"
+colnames(lmer_aic_table)[colnames(lmer_aic_table) == "Terms"] <- "Model Terms"
 # Save to CSV
 write.csv(
   lmer_aic_table,
-  file = "results/lmer_AIC.csv",
+  file = "results/lmer_AIC_elevation.csv",
   row.names = FALSE
 )
 
@@ -301,19 +303,17 @@ mods_spamm<-list(m1_spamm,m2_spamm,m3_spamm,m4_spamm,m5_spamm,m6_spamm,m7_spamm,
 # Extract AIC for each model
 aic_values <- sapply(mods_spamm, extractAIC)
 
-# Extract edf and AIC values from the aic_values matrix
-edf_values <- aic_values["edf", ]
+# Extract  and AIC values from the aic_values matrix
+
 aic_values_only <- aic_values["AIC", ]
 spamm_terms <- lmer_terms
 delta_AIC_spamm <-aic_values_only - min(aic_values_only) # calculate delta AIC
 AIC_weight_spamm <-exp(-0.5 * delta_AIC_spamm) / 
   sum(exp(-0.5 * delta_AIC_spamm)) #calculate AIC weights
 # Create a data frame
-model_names <- paste0("m", 1:16, "_spamm")
-comparison_table <- data.frame(
-  Model = model_names,
+
+comparison_table_spamm <- data.frame(
   Terms = spamm_terms,
-  edf = edf_values,
   AIC = format_numeric(aic_values_only),
   Delta_AIC = format_numeric(delta_AIC_spamm),
   Weight = format_numeric(AIC_weight_spamm)
@@ -321,13 +321,15 @@ comparison_table <- data.frame(
 
 
 # Print the resulting table
-print(comparison_table)
+print(comparison_table_spamm)
 
 # Sort by AIC
-comparison_table <- comparison_table[order(as.numeric(comparison_table$AIC)), ]
+comparison_table_spamm <- comparison_table_spamm[order(as.numeric(comparison_table_spamm$Delta_AIC)), ]
+colnames(comparison_table_spamm)[colnames(comparison_table_spamm) == "Delta_AIC"] <- "Delta AIC"
+colnames(comparison_table_spamm)[colnames(comparison_table_spamm) == "Type"] <- "Model Type"
 # Save to CSV
 write.csv(
-  comparison_table,
+  comparison_table_spamm,
   file = "results/spamm_AIC.csv",
   row.names = FALSE
 )
@@ -505,7 +507,45 @@ moran.test(regs$change_in_treeline_elevation, listw = listw)
 
 
 #####################################
-#######best model overall out of linear mixed models, spatial mixed models, and pcnm
+#LMER
+# Generate the LaTeX table
+latex_table_lmer <- xtable(lmer_aic_table, 
+                           label = "tab:spamm_aic",
+                           digits = 4, align = c(rep("l",5)), display = c("s","G","G","G","G"))
+
+# Print the LaTeX code
+print(latex_table_lmer, 
+      include.rownames = FALSE, # Do not include row names
+      floating = TRUE,          # Add LaTeX float environment
+      table.placement = "t")    # Placement option [t] for top
+# Save the LaTeX code to a file
+sink("results/lmer_aic_elevation.tex")
+print(latex_table_lmer, 
+      include.rownames = FALSE, 
+      floating = TRUE, 
+      table.placement = "t")
+sink()
+
+#SPAMM
+# Generate the LaTeX table
+latex_table <- xtable(comparison_table_spamm, 
+                      label = "tab:spamm_aic",
+                      digits = 4, align = c(rep("l",5)), display = c("s","G","G","G","G"))
+
+# Print the LaTeX code
+print(latex_table, 
+      include.rownames = FALSE, # Do not include row names
+      floating = TRUE,          # Add LaTeX float environment
+      table.placement = "t")    # Placement option [t] for top
+# Save the LaTeX code to a file
+sink("results/spamm_aic_elevation.tex")
+print(latex_table, 
+      include.rownames = FALSE, 
+      floating = TRUE, 
+      table.placement = "t")
+sink()
+
+#######best model overall out of linear mixed models, spatial mixed models
 all_mods <- c(mods, mods_spamm)
 # Extract AIC for each model
 aic_values <- sapply(all_mods, extractAIC)
@@ -516,11 +556,10 @@ aic_values_only <- aic_values[2, ]
 
 # Create a data frame
 # Generate model names for the first group
-model_names_group1 <- paste0("m", 1:16)
+model_names_group1 <- rep("Linear",16)
 # Generate model names for the second group
-model_names_group2 <- paste0("m", 1:16, "_spamm")
-# Generate model names for the third group
-#model_names_group3 <- paste0("m", 1:16, "_pcnm")
+model_names_group2 <- rep("Spatial",16)
+
 # Combine all the model names into one vector
 model_names <- c(model_names_group1, model_names_group2)
 
@@ -532,31 +571,50 @@ terms<- c(lmer_terms, spamm_terms)
 # Create a data frame
 
 comparison_table<- data.frame(
-  Model = model_names,
+  Type = model_names,
   Terms = terms,
-  EDF = edf_values,
   AIC = format_numeric(aic_values_only),
-  Delta_AIC = format_numeric(delta_AIC),
-  Weight = format_numeric(AIC_weight)
+  DeltaAIC = format_numeric(delta_AIC),
+  Weight = format_numeric(AIC_weight),check.names = FALSE
 )
 
 
 # Sort by AIC for better comparison
-comparison_table <- comparison_table[order(comparison_table$AIC), ]
+comparison_table_all <- comparison_table[order(comparison_table$DeltaAIC), ]
 
+# Rename the DeltaAIC column to Delta AIC
+colnames(comparison_table_all)[colnames(comparison_table_all) == "DeltaAIC"] <- "Delta AIC"
+colnames(comparison_table_all)[colnames(comparison_table_all) == "Type"] <- "Model Type"
 # Print the resulting table
-print(comparison_table)
+print(comparison_table_all)
+
 
 # Save to CSV
 write.csv(
-  comparison_table,
+  comparison_table_all,
   file = "results/total_AIC.csv",
   row.names = FALSE
 )
+latex_table <- xtable(comparison_table_all, 
+                      label = "tab:total_aic_elevation",
+                      digits = 4, align = c(rep("l",6)), display = c("s","G","G","G","G","G"))
+
+# Print the LaTeX code
+print(latex_table, 
+      include.rownames = FALSE, # Do not include row names
+      floating = TRUE,          # Add LaTeX float environment
+      table.placement = "t")    # Placement option [t] for top
+# Save the LaTeX code to a file
+sink("results/total_aic_elevation.tex")
+print(latex_table, 
+      include.rownames = FALSE, # Do not include row names
+      floating = TRUE,          # Add LaTeX float environment
+      table.placement = "t") 
+sink()
 
 ######best model out of top models in each category
 mods_best<-list(m8, m2_spamm)
-model_names <- c("m8","m2_spamm")
+model_names <- c("Linear","Spatial")
 # Extract AIC for each model
 aic_values <- sapply(mods_best, extractAIC)
 
@@ -566,88 +624,153 @@ aic_values_only <- aic_values[2, ]
 delta_AIC <-aic_values_only - min(aic_values_only) # calculate delta AIC
 AIC_weight <-exp(-0.5 * delta_AIC) / 
   sum(exp(-0.5 * delta_AIC)) #calculate AIC weights
-m8_terms <- c("Stations_After_Treeline + Direction + Lat * Long")
-m2_spamm_terms <- c("Lat * Long")
+m8_terms <- c("# Stations After Treeline + Direction + Latitude * Longitude")
+m2_spamm_terms <- c("Latitude x Longitude")
 #m9_pcnm_terms <- c("PCNM1 + PCNM2 + dist_coast")
 terms<- c(m8_terms,m2_spamm_terms) # terms for table calrity
+
 comparison_table <- data.frame(
-  Model = model_names,
+  Type = model_names,
   Terms = terms,
-  edf = edf_values,
   AIC = format_numeric(aic_values_only),
-  Delta_AIC = format_numeric(delta_AIC),
+  DeltaAIC = format_numeric(delta_AIC),
   Weight = format_numeric(AIC_weight)
 )
-comparison_table <- comparison_table[order(comparison_table$AIC), ]
+comparison_table_best <- comparison_table[order(comparison_table$AIC), ]
+colnames(comparison_table_best)[colnames(comparison_table_best) == "DeltaAIC"] <- "Delta AIC"
+colnames(comparison_table_best)[colnames(comparison_table_best) == "Type"] <- "Model Type"
+comparison_table_best
 
-comparison_table
-#m2 spamm is contributing 99.99% of the variation... not suspicious because it is fine in its own I think
-plot(residuals(m2_spamm)) #residuals are fine
 
 # Save to CSV
 write.csv(
-  comparison_table,
-  file = "results/best_AIC.csv",
+  comparison_table_best,
+  file = "results/best_AIC_elevation.csv",
   row.names = FALSE
 )
+latex_table <- xtable(comparison_table_best, 
+                      label = "tab:best_aic",
+                      digits = 4, align = c(rep("l",6)), display = c("s","s","G","G","G","G"))
 
-##### make tables for the 3 best models (one of each analysis type: liner, spatial, and pcnm)
-# Helper function to extract model output
-extract_model_output <- function(model, model_name) {
-  # Extract summary
-  summary_output <- summary(model)
-  coefficients <- summary_output$coefficients
-  
-  # Extract confidence intervals
-  conf_intervals <- confint(model, parm = names(fixef(model)))  # Fixed effects only
-  
-  # Ensure row alignment by using only fixed-effect terms
-  terms <- rownames(coefficients)
-  ci_terms <- rownames(conf_intervals)
-  matching_terms <- intersect(terms, ci_terms)
-  
-  # Subset coefficients and confidence intervals
-  coefficients <- coefficients[matching_terms, , drop = FALSE]
-  conf_intervals <- conf_intervals[matching_terms, , drop = FALSE]
-  
-  # Create a data frame with the required columns
-  output_table <- data.frame(
-    Terms = matching_terms,
-    Estimate = format_numeric(coefficients[, "Estimate"]),
-    Std_Error = format_numeric(coefficients[, "Std. Error"]),
-    T_Value = format_numeric(coefficients[, "t value"]),
-    CI_Lower = format_numeric(conf_intervals[, 1]),
-    CI_Upper = format_numeric(conf_intervals[, 2])
-  )
-  
-  # Save the output table to the results folder
-  write.csv(
-    output_table,
-    file = paste0("results/", model_name, "_output.csv"),
-    row.names = FALSE
-  )
-  
-  return(output_table)
-}
+# Print the LaTeX code
+print(latex_table, 
+      include.rownames = FALSE, # Do not include row names
+      floating = TRUE,          # Add LaTeX float environment
+      table.placement = "t")    # Placement option [t] for top
+# Save the LaTeX code to a file
+sink("results/best_aic_elevation.tex")
+print(latex_table, 
+      include.rownames = FALSE, 
+      floating = TRUE, 
+      table.placement = "t")
+sink()
 
-# Extract and save outputs for the three best models
-m8_output <- extract_model_output(m8, "m8")
-#m9_pcnm_output <- extract_model_output(m9_pcnm, "m9_pcnm")
+## now I need model output tables for m8, m2_spamm
 
-## USING THIS SPAMM MODEL TO REPORT OUTPUT, MAXIMIZING P_V IN CI CALCULATION, A LIKLIHOOD ESTIMATE
-#refit model with suggested parameters
-# Extract suggested parameters for refitting
-fixed_effects <- fixef(m2_spamm)
-best_fit_params <- confint(m2_spamm,parm = names(fixed_effects))$confint_best_fit
+###m8
 
-# Refit the model with these parameters
-refitted_model <- update(m2_spamm, init = best_fit_params)
+# Extract fixed effects summary from the model
+fixed_effects_df <- as.data.frame(coef(summary(m8)))
 
-# Use the refitted model for analysis
-summary(refitted_model)
-confint(refitted_model, parm = names(fixed_effects))
-###HAD TO MANUALLY TYPE TABLE FOR THE SPAMM MODEL
+# Add confidence intervals if needed
+conf_intervals <- confint(m8)
+conf_intervals<-conf_intervals[3:14,]
 
-#for manually extracting random effects and adding them to the table
-summary(m8)
-#summary(m9_pcnm)
+# Add confidence intervals to the fixed effects table
+fixed_effects_df$CI.Lower <- conf_intervals[, 1]
+fixed_effects_df$CI.Upper <- conf_intervals[, 2]
+# Rename columns for clarity
+colnames(fixed_effects_df) <- c("Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
+rownames(fixed_effects_df) <- c("Intercept","# Stations After Treeline","Direction (North)","Direction (Northeast)","Direction (Northwest)"
+                                ,"Direction (South)","Direction (Southeast)","Direction (Southwest)","Direction (West)","Latitude",
+                                "Longitude","Latitude x Longitude")
+
+#extract random effects
+random_effects <- VarCorr(m8)
+random_effects_summary <- as.data.frame(random_effects)
+
+# Extract random intercept variance and standard deviation
+random_variance <- random_effects_summary$vcov[1]
+random_sd <- sqrt(random_variance)
+
+# Create a data frame for random effects
+random_effects_df <- data.frame(
+  Term = c("Random intercept (variance)", "Random intercept (std. dev.)"),
+  Estimate = c(random_variance, random_sd),
+  SE = NA,  # Random effects typically don't have standard errors
+  'TValue' = NA,    # No t-value for random effects
+  'LowerCI' = NA,   # No confidence intervals for random effects
+  'UpperCI' = NA
+)
+colnames(random_effects_df) <- c("Term","Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
+#combine fixed and random effects into single table
+# Add term names to the fixed effects
+fixed_effects_df$Term <- rownames(fixed_effects_df)
+
+# Combine fixed and random effects
+combined_effects <- rbind(
+  fixed_effects_df[, c("Term", "Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")],
+  random_effects_df
+)
+
+# Convert to LaTeX table
+latex_table <- xtable(
+  combined_effects,
+  label = "tab:model_summarym8",
+  digits = 4, align = c(rep("l",7)), display = c("s","G","G","G","G","G","G"))
+
+# Save as a .tex file
+sink("results/model_summary_table_elevation_m8.tex")
+print(latex_table, include.rownames = FALSE)
+sink()
+
+#### m2_spamm
+# Extract fixed effects summary from the model
+fixed_effects_df <- as.data.frame(summary(m2_spamm, details = FALSE, verbose = FALSE)$beta_table)
+
+# Add confidence intervals if needed
+conf_intervals <- confint(m2_spamm, parm = names(fixef(m2_spamm)))
+conf_intervals<-attr(conf_intervals,"table")
+
+# Add confidence intervals to the fixed effects table
+fixed_effects_df$CI.Lower <- conf_intervals[, 1]
+fixed_effects_df$CI.Upper <- conf_intervals[, 2]
+
+# Rename columns for clarity
+colnames(fixed_effects_df) <- c("Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
+rownames(fixed_effects_df) <- c("Intercept","Latitude","Longitude")
+#extract random effects
+random_effects <- VarCorr(m2_spamm)
+random_effects_summary <- as.data.frame(random_effects[1,])
+
+# Create a data frame for random effects
+random_effects_df <- data.frame(
+  Term = c("Random intercept (variance)", "Random intercept (std. dev.)"),
+  Estimate = c(random_effects_summary[,3],random_effects_summary[,4]),
+  Std.Error = NA,  # Random effects typically don't have standard errors
+  t.value = NA,    # No t-value for random effects
+  CI.Lower = NA,   # No confidence intervals for random effects
+  CI.Upper = NA
+)
+colnames(random_effects_df) <- c("Term","Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
+#combine fixed and random effects into single table
+# Add term names to the fixed effects
+fixed_effects_df$Term <- rownames(fixed_effects_df)
+
+# Combine fixed and random effects
+combined_effects <- rbind(
+  fixed_effects_df[, c("Term", "Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")],
+  random_effects_df
+)
+
+# Convert to LaTeX table
+latex_table <- xtable(
+  combined_effects,
+  label = "tab:model_summary_m2spamm",
+  digits = 4, align = c(rep("l",7)), display = c("s","G","G","G","G","G","G")
+)
+
+# Save as a .tex file
+sink("results/model_summary_table_elevation_m2_spamm.tex")
+print(latex_table, include.rownames = FALSE)
+sink()
