@@ -500,6 +500,7 @@ extract_model_output <- function(model, model_name) {
 
 
 ##get LaTeX code for all tables
+
 #LMER
 # Generate the LaTeX table
 latex_table_lmer <- xtable(lmer_aic_table, 
