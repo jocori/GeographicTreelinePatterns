@@ -305,20 +305,20 @@ mods_spamm<-list(m1_spamm,m2_spamm,m3_spamm,m4_spamm,m5_spamm,m6_spamm,m7_spamm,
                  m8_spamm,m9_spamm,m10_spamm,m11_spamm,m12_spamm,m13_spamm,m14_spamm,
                  m15_spamm,m16_spamm)
 # Extract AIC for each model
-aic_values <- sapply(mods_spamm, extractAIC)
+aic_values_spamm <- sapply(mods_spamm, extractAIC)
 
 # Extract edf and AIC values from the aic_values matrix
 #edf_values <- aic_values["edf", ]
-aic_values_only <- aic_values["AIC", ]
+aic_values_only_spamm <- aic_values_spamm["AIC", ]
 spamm_terms <- lmer_terms
-delta_AIC_spamm <-aic_values_only - min(aic_values_only) # calculate delta AIC
+delta_AIC_spamm <-aic_values_only_spamm - min(aic_values_only_spamm) # calculate delta AIC
 AIC_weight_spamm <-exp(-0.5 * delta_AIC_spamm) / 
   sum(exp(-0.5 * delta_AIC_spamm)) #calculate AIC weights
 # Create a data frame
-model_names <- paste0("m", 1:16, "_spamm")
+model_names_spamm <- paste0("m", 1:16, "_spamm")
 comparison_table_spamm <- data.frame(
   Terms = spamm_terms,
-  AIC = format_numeric(aic_values_only),
+  AIC = format_numeric(aic_values_only_spamm),
   Delta_AIC = format_numeric(delta_AIC_spamm),
   Weight = format_numeric(AIC_weight_spamm)
 )
@@ -337,9 +337,6 @@ write.csv(
   file = "results/spamm_AIC_ndvi.csv",
   row.names = FALSE
 )
-#best model is m1_spamm
-confint(m2_spamm, parm = names(fixef(m2_spamm))) #significant interaction
-confint(m1_spamm, parm = names(fixef(m1_spamm)))
 
 
 #calculate k nearest neighbors for moran's test (test for spatial autocorrelation)
@@ -353,11 +350,11 @@ moran.test(regs$change_in_treeline_NDVI, listw = listw)
 #######best model overall out of linear mixed models, spatial mixed models, and pcnm
 all_mods <- c(mods, mods_spamm)
 # Extract AIC for each model
-aic_values <- sapply(all_mods, extractAIC)
+aic_values_all <- sapply(all_mods, extractAIC)
 
 # Extract edf and AIC values from the aic_values matrix
-edf_values <- aic_values[1, ]
-aic_values_only <- aic_values[2, ]
+edf_values <- aic_values_all[1, ]
+aic_values_only_all <- aic_values_all[2, ]
 
 # Create a data frame
 # Generate model names for the first group
@@ -366,26 +363,26 @@ model_names_group1 <- rep("Linear",16)
 model_names_group2 <- rep("Spatial",16)
 
 # Combine all the model names into one vector
-model_names <- c(model_names_group1, model_names_group2)
+model_names_all <- c(model_names_group1, model_names_group2)
 
 
-delta_AIC <-aic_values_only - min(aic_values_only) # calculate delta AIC
-AIC_weight <-exp(-0.5 * delta_AIC) / 
-  sum(exp(-0.5 * delta_AIC)) #calculate AIC weights
-terms<- c(lmer_terms, spamm_terms)
+delta_AIC_all <-aic_values_only_all - min(aic_values_only_all) # calculate delta AIC
+AIC_weight_all <-exp(-0.5 * delta_AIC_all) / 
+  sum(exp(-0.5 * delta_AIC_all)) #calculate AIC weights
+terms_all<- c(lmer_terms, spamm_terms)
 # Create a data frame
 
-comparison_table<- data.frame(
-  Type = model_names,
-  Terms = terms,
+comparison_table_all<- data.frame(
+  Type = model_names_all,
+  Terms = terms_all,
   AIC = format_numeric(aic_values_only),
-  DeltaAIC = format_numeric(delta_AIC),
-  Weight = format_numeric(AIC_weight),check.names = FALSE
+  DeltaAIC = format_numeric(delta_AIC_all),
+  Weight = format_numeric(AIC_weight_all),check.names = FALSE
 )
 
 
 # Sort by AIC for better comparison
-comparison_table_all <- comparison_table[order(comparison_table$DeltaAIC), ]
+comparison_table_all <- comparison_table_all[order(comparison_table_all$DeltaAIC), ]
 
 # Rename the DeltaAIC column to Delta AIC
 colnames(comparison_table_all)[colnames(comparison_table_all) == "DeltaAIC"] <- "Delta AIC"
@@ -403,30 +400,30 @@ write.csv(
 
 ######best model out of top models in each category
 mods_best<-list(m1, m1_spamm)
-model_names <- c("m1","m1_spamm")
+#model_names_best <- c("m1","m1_spamm")
 # Extract AIC for each model
 aic_values <- sapply(mods_best, extractAIC)
 
 # Extract edf and AIC values from the aic_values matrix
 #edf_values <- aic_values[1, ]
-aic_values_only <- aic_values[2, ]
-delta_AIC <-aic_values_only - min(aic_values_only) # calculate delta AIC
-AIC_weight <-exp(-0.5 * delta_AIC) / 
-  sum(exp(-0.5 * delta_AIC)) #calculate AIC weights
+aic_values_only_best <- aic_values_best[2, ]
+delta_AIC_best <-aic_values_only_best - min(aic_values_only_best) # calculate delta AIC
+AIC_weight_best <-exp(-0.5 * delta_AIC_best) / 
+  sum(exp(-0.5 * delta_AIC_best)) #calculate AIC weights
 m1_terms <- c("Latitude + Longitude")
 m1_spamm_terms <- c("Latitude + Longitude ")
 model_names_best <- c("Linear", "Spatial")
 #m9_pcnm_terms <- c("PCNM1 + PCNM2 + dist_coast")
-terms<- c(m1_terms,m1_spamm_terms) # terms for table calrity
-comparison_table <- data.frame(
+terms_best<- c(m1_terms,m1_spamm_terms) # terms for table calrity
+comparison_table_best <- data.frame(
   Type = model_names_best,
-  Terms = terms,
-  AIC = format_numeric(aic_values_only),
-  Delta_AIC = format_numeric(delta_AIC),
-  Weight = format_numeric(AIC_weight),
+  Terms = terms_best,
+  AIC = format_numeric(aic_values_only_best),
+  Delta_AIC = format_numeric(delta_AIC_best),
+  Weight = format_numeric(AIC_weight_best),
   check.names = FALSE
 )
-comparison_table_best <- comparison_table[order(comparison_table$Delta_AIC), ]
+comparison_table_best <- comparison_table_best[order(comparison_table_best$Delta_AIC), ]
 colnames(comparison_table_best)[colnames(comparison_table_best) == "Delta_AIC"] <- "Delta AIC"
 colnames(comparison_table_best)[colnames(comparison_table_best) == "Type"] <- "Model Type"
 
@@ -484,18 +481,18 @@ sink()
 
 #SPAMM
 # Generate the LaTeX table
-latex_table <- xtable(comparison_table_spamm, 
+latex_table_spamm <- xtable(comparison_table_spamm, 
                       label = "tab:spamm_aic",
                       digits = 4, align = c(rep("l",5)), display = c("s","G","G","G","G"))
 
 # Print the LaTeX code
-print(latex_table, 
+print(latex_table_spamm, 
       include.rownames = FALSE, # Do not include row names
       floating = TRUE,          # Add LaTeX float environment
       table.placement = "t")    # Placement option [t] for top
 # Save the LaTeX code to a file
 sink("results/spamm_aic_ndvi.tex")
-print(latex_table, 
+print(latex_table_spamm, 
       include.rownames = FALSE, 
       floating = TRUE, 
       table.placement = "t")
@@ -503,36 +500,36 @@ sink()
 
 # all models
 # Generate the LaTeX table
-latex_table <- xtable(comparison_table_all, 
+latex_table_all <- xtable(comparison_table_all, 
                       label = "tab:total_aic",
                       digits = 4, align = c(rep("l",6)), display = c("s","G","G","G","G","G"))
 
 # Print the LaTeX code
-print(latex_table, 
+print(latex_table_all, 
       include.rownames = FALSE, # Do not include row names
       floating = TRUE,          # Add LaTeX float environment
       table.placement = "t")    # Placement option [t] for top
 # Save the LaTeX code to a file
 sink("results/total_aic_ndvi.tex")
-print(latex_table, 
+print(latex_table_all, 
       include.rownames = FALSE, # Do not include row names
       floating = TRUE,          # Add LaTeX float environment
       table.placement = "t") 
 sink()
 #best models only
 # Generate the LaTeX table
-latex_table <- xtable(comparison_table_best, 
+latex_table_best <- xtable(comparison_table_best, 
                       label = "tab:best_aic",
                       digits = 4, align = c(rep("l",6)), display = c("s","s","G","G","G","G"))
 
 # Print the LaTeX code
-print(latex_table, 
+print(latex_table_best, 
       include.rownames = FALSE, # Do not include row names
       floating = TRUE,          # Add LaTeX float environment
       table.placement = "t")    # Placement option [t] for top
 # Save the LaTeX code to a file
 sink("results/best_aic_ndvi.tex")
-print(latex_table, 
+print(latex_table_best, 
       include.rownames = FALSE, 
       floating = TRUE, 
       table.placement = "t")
@@ -544,107 +541,107 @@ sink()
 ###m1
 
 # Extract fixed effects summary from the model
-fixed_effects_df <- as.data.frame(coef(summary(m1)))
+m1.fixed_effects_df <- as.data.frame(coef(summary(m1)))
 
 # Add confidence intervals if needed
-conf_intervals <- confint(m1)
-conf_intervals<-conf_intervals[3:5,]
+m1.conf_intervals <- confint(m1)
+m1.conf_intervals<-m1.conf_intervals[3:5,]
 
 # Add confidence intervals to the fixed effects table
-fixed_effects_df$CI.Lower <- conf_intervals[, 1]
-fixed_effects_df$CI.Upper <- conf_intervals[, 2]
+m1.fixed_effects_df$CI.Lower <- m1.conf_intervals[, 1]
+m1.fixed_effects_df$CI.Upper <- m1.conf_intervals[, 2]
 # Rename columns for clarity
-colnames(fixed_effects_df) <- c("Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
-rownames(fixed_effects_df) <- c("Intercept","Latitude","Longitude")
+colnames(m1.fixed_effects_df) <- c("Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
+rownames(m1.fixed_effects_df) <- c("Intercept","Latitude","Longitude")
 
 #extract random effects
-random_effects <- VarCorr(m1)
-random_effects_summary <- as.data.frame(random_effects)
+m1.random_effects <- VarCorr(m1)
+m1.random_effects_summary <- as.data.frame(m1.random_effects)
 
 # Extract random intercept variance and standard deviation
-random_variance <- random_effects_summary$vcov[1]
-random_sd <- sqrt(random_variance)
+m1.random_variance <- m1.random_effects_summary$vcov[1]
+m1.random_sd <- sqrt(m1.random_variance)
 
 # Create a data frame for random effects
-random_effects_df <- data.frame(
+m1.random_effects_df <- data.frame(
   Term = c("Random intercept (variance)", "Random intercept (std. dev.)"),
-  Estimate = c(random_variance, random_sd),
+  Estimate = c(m1.random_variance, m1.random_sd),
   SE = NA,  # Random effects typically don't have standard errors
   'TValue' = NA,    # No t-value for random effects
   'LowerCI' = NA,   # No confidence intervals for random effects
   'UpperCI' = NA
 )
-colnames(random_effects_df) <- c("Term","Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
+colnames(m1.random_effects_df) <- c("Term","Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
 #combine fixed and random effects into single table
 # Add term names to the fixed effects
-fixed_effects_df$Term <- rownames(fixed_effects_df)
+m1.fixed_effects_df$Term <- rownames(m1.fixed_effects_df)
 
 # Combine fixed and random effects
-combined_effects <- rbind(
-  fixed_effects_df[, c("Term", "Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")],
-  random_effects_df
+m1.combined_effects <- rbind(
+  m1.fixed_effects_df[, c("Term", "Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")],
+  m1.random_effects_df
 )
 
 # Convert to LaTeX table
-latex_table <- xtable(
-  combined_effects,
-  label = "tab:model_summary",
+m1.latex_table <- xtable(
+  m1.combined_effects,
+  label = "tab:m1.model_summary",
   digits = 4, align = c(rep("l",7)), display = c("s","G","G","G","G","G","G"))
 
 # Save as a .tex file
 sink("results/model_summary_table_NDVI_m1.tex")
-print(latex_table, include.rownames = FALSE)
+print(m1.latex_table, include.rownames = FALSE)
 sink()
 
 #### m1_spamm
 # Extract fixed effects summary from the model
-fixed_effects_df <- as.data.frame(summary(m1_spamm, details = FALSE, verbose = FALSE)$beta_table)
+m1spamm.fixed_effects_df <- as.data.frame(summary(m1_spamm, details = FALSE, verbose = FALSE)$beta_table)
 
 # Add confidence intervals if needed
-conf_intervals <- confint(m1_spamm, parm = names(fixef(m1_spamm)))
-conf_intervals<-attr(conf_intervals,"table")
+m1spamm.conf_intervals <- confint(m1_spamm, parm = names(fixef(m1_spamm)))
+m1spamm.conf_intervals<-attr(m1spamm.conf_intervals,"table")
 
 # Add confidence intervals to the fixed effects table
-fixed_effects_df$CI.Lower <- conf_intervals[, 1]
-fixed_effects_df$CI.Upper <- conf_intervals[, 2]
+m1spamm.fixed_effects_df$CI.Lower <- m1spamm.conf_intervals[, 1]
+m1spamm.fixed_effects_df$CI.Upper <- m1spamm.conf_intervals[, 2]
 
 # Rename columns for clarity
-colnames(fixed_effects_df) <- c("Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
-rownames(fixed_effects_df) <- c("Intercept","Latitude","Longitude")
+colnames(m1spamm.fixed_effects_df) <- c("Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
+rownames(m1spamm.fixed_effects_df) <- c("Intercept","Latitude","Longitude")
 #extract random effects
-random_effects <- VarCorr(m1_spamm)
-random_effects_summary <- as.data.frame(random_effects[1,])
+m1spamm.random_effects <- VarCorr(m1_spamm)
+m1spamm.random_effects_summary <- as.data.frame(m1spamm.random_effects[1,])
 
 # Create a data frame for random effects
-random_effects_df <- data.frame(
+m1spamm.random_effects_df <- data.frame(
   Term = c("Random intercept (variance)", "Random intercept (std. dev.)"),
-  Estimate = c(random_effects_summary[,3],random_effects_summary[,4]),
+  Estimate = c(m1spamm.random_effects_summary[,3],m1spamm.random_effects_summary[,4]),
   Std.Error = NA,  # Random effects typically don't have standard errors
   t.value = NA,    # No t-value for random effects
   CI.Lower = NA,   # No confidence intervals for random effects
   CI.Upper = NA
 )
-colnames(random_effects_df) <- c("Term","Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
+colnames(m1spamm.random_effects_df) <- c("Term","Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
 #combine fixed and random effects into single table
 # Add term names to the fixed effects
-fixed_effects_df$Term <- rownames(fixed_effects_df)
+m1spamm.fixed_effects_df$Term <- rownames(m1spamm.fixed_effects_df)
 
 # Combine fixed and random effects
-combined_effects <- rbind(
-  fixed_effects_df[, c("Term", "Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")],
-  random_effects_df
+m1spamm.combined_effects <- rbind(
+  m1spamm.fixed_effects_df[, c("Term", "Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")],
+  m1spamm.random_effects_df
 )
 
 # Convert to LaTeX table
-latex_table <- xtable(
-  combined_effects,
+m1spamm.latex_table <- xtable(
+  m1spamm.combined_effects,
   label = "tab:model_summary_m1spamm",
   digits = 4, align = c(rep("l",7)), display = c("s","G","G","G","G","G","G")
 )
 
 # Save as a .tex file
 sink("results/model_summary_table_NDVI_m1_spamm.tex")
-print(latex_table, include.rownames = FALSE)
+print(m1spamm.latex_table, include.rownames = FALSE)
 sink()
 
 
