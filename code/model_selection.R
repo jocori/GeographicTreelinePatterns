@@ -284,7 +284,6 @@ m15_spamm<-fitme(change_in_treeline_elevation~dist_coast+
                    Lat+Long +Matern(1|Long +Lat), 
                  data = regs, method = "REML")
 summary(m15_spamm)
-confint(m15_spamm, parm = names(fixef(m15_spamm)))
 AIC(m15_spamm)
 moran.test(resid(m15_spamm),listw =listw)
 
@@ -293,7 +292,6 @@ m16_spamm<-fitme(change_in_treeline_elevation~dist_coast+
                    Lat*Long +Matern(1|Long +Lat), 
                  data = regs, method = "REML")
 summary(m16_spamm)
-confint(m16_spamm, parm = names(fixef(m16_spamm)))
 AIC(m16_spamm)
 moran.test(resid(m16_spamm),listw =listw)
 #best spatial mixed model
@@ -301,20 +299,20 @@ mods_spamm<-list(m1_spamm,m2_spamm,m3_spamm,m4_spamm,m5_spamm,m6_spamm,m7_spamm,
            m8_spamm,m9_spamm,m10_spamm,m11_spamm,m12_spamm,m13_spamm,m14_spamm,
            m15_spamm,m16_spamm)
 # Extract AIC for each model
-aic_values <- sapply(mods_spamm, extractAIC)
+aic_values_spamm <- sapply(mods_spamm, extractAIC)
 
 # Extract  and AIC values from the aic_values matrix
 
-aic_values_only <- aic_values["AIC", ]
+aic_values_only_spamm <- aic_values_spamm["AIC", ]
 spamm_terms <- lmer_terms
-delta_AIC_spamm <-aic_values_only - min(aic_values_only) # calculate delta AIC
+delta_AIC_spamm <-aic_values_only_spamm - min(aic_values_only_spamm) # calculate delta AIC
 AIC_weight_spamm <-exp(-0.5 * delta_AIC_spamm) / 
   sum(exp(-0.5 * delta_AIC_spamm)) #calculate AIC weights
 # Create a data frame
 
 comparison_table_spamm <- data.frame(
   Terms = spamm_terms,
-  AIC = format_numeric(aic_values_only),
+  AIC = format_numeric(aic_values_only_spamm),
   Delta_AIC = format_numeric(delta_AIC_spamm),
   Weight = format_numeric(AIC_weight_spamm)
 )
@@ -400,7 +398,7 @@ terms_all<- c(lmer_terms, spamm_terms)
 comparison_table_all<- data.frame(
   Type = model_names_all,
   Terms = terms_all,
-  AIC = format_numeric(aic_values_only),
+  AIC = format_numeric(aic_values_only_all),
   DeltaAIC = format_numeric(delta_AIC_all),
   Weight = format_numeric(AIC_weight_all),check.names = FALSE
 )
@@ -501,7 +499,7 @@ m8.fixed_effects_df <- as.data.frame(coef(summary(m8)))
 
 # Add confidence intervals if needed
 m8.conf_intervals <- confint(m8)
-m8.conf_intervals<-conf_intervals[3:14,]
+m8.conf_intervals<-m8.conf_intervals[3:14,]
 
 # Add confidence intervals to the fixed effects table
 m8.fixed_effects_df$CI.Lower <- m8.conf_intervals[, 1]
