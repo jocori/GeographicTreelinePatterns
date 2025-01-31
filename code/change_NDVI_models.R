@@ -189,7 +189,6 @@ write.csv(
 m1_spamm <- fitme(change_in_treeline_NDVI~Lat +Long+ 
                     Matern(1|Long +Lat), data = regs, method = "REML")
 summary(m1_spamm)
-confint(m1_spamm, parm = names(fixef(m1_spamm)))
 AIC(m1_spamm)
 moran.test(resid(m1_spamm),listw =listw)
 
@@ -400,7 +399,7 @@ write.csv(
   file = "results/total_AIC_ndvi.csv",
   row.names = FALSE
 )
-#best overall is m8
+#best overall is m1_spamm
 
 ######best model out of top models in each category
 mods_best<-list(m1, m1_spamm)
@@ -442,43 +441,6 @@ write.csv(
 )
 
 ##### make tables for the 3 best models (one of each analysis type: liner, spatial, and pcnm)
-# Helper function to extract model output
-extract_model_output <- function(model, model_name) {
-  # Extract summary
-  summary_output <- summary(model)
-  coefficients <- summary_output$coefficients
-  
-  # Extract confidence intervals
-  conf_intervals <- confint(model, parm = names(fixef(model)))  # Fixed effects only
-  
-  # Ensure row alignment by using only fixed-effect terms
-  terms <- rownames(coefficients)
-  ci_terms <- rownames(conf_intervals)
-  matching_terms <- intersect(terms, ci_terms)
-  
-  # Subset coefficients and confidence intervals
-  coefficients <- coefficients[matching_terms, , drop = FALSE]
-  conf_intervals <- conf_intervals[matching_terms, , drop = FALSE]
-  
-  # Create a data frame with the required columns
-  output_table <- data.frame(
-    Terms = matching_terms,
-    Estimate = format_numeric(coefficients[, "Estimate"]),
-    Std_Error = format_numeric(coefficients[, "Std. Error"]),
-    T_Value = format_numeric(coefficients[, "t value"]),
-    CI_Lower = format_numeric(conf_intervals[, 1]),
-    CI_Upper = format_numeric(conf_intervals[, 2])
-  )
-  
-  # Save the output table to the results folder
-  write.csv(
-    output_table,
-    file = paste0("results/", model_name, "_output.csv"),
-    row.names = FALSE
-  )
-  
-  return(output_table)
-}
 
 # Extract and save outputs for the three best models
 #m1_output <- extract_model_output(m1, "m1")
@@ -504,7 +466,7 @@ extract_model_output <- function(model, model_name) {
 #LMER
 # Generate the LaTeX table
 latex_table_lmer <- xtable(lmer_aic_table, 
-                      label = "tab:spamm_aic",
+                      label = "tab:lmer_aic",
                       digits = 4, align = c(rep("l",5)), display = c("s","G","G","G","G"))
 
 # Print the LaTeX code
@@ -685,59 +647,4 @@ sink("results/model_summary_table_NDVI_m1_spamm.tex")
 print(latex_table, include.rownames = FALSE)
 sink()
 
-### m8
-# Extract fixed effects summary from the model
-fixed_effects_df <- as.data.frame(coef(summary(m8)))
-
-# Add confidence intervals if needed
-conf_intervals <- confint(m8)
-conf_intervals<-conf_intervals[3:14,]
-
-# Add confidence intervals to the fixed effects table
-fixed_effects_df$CI.Lower <- conf_intervals[, 1]
-fixed_effects_df$CI.Upper <- conf_intervals[, 2]
-
-# Rename columns for clarity
-colnames(fixed_effects_df) <- c("Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
-rownames(fixed_effects_df) <- c("Intercept","# Stations After Treeline", "Direction (North)", "Direction (Northeast)",
-                                "Direction (Northwest)","Direction (South)","Direction (Southeast)","Direction (Southwest)",
-                                "Direction (West)","Latitude","Longitude", "Latitude x Longitude")
-
-#extract random effects
-random_effects <- VarCorr(m8)
-random_effects_summary <- as.data.frame(random_effects)
-
-# Extract random intercept variance and standard deviation
-random_variance <- random_effects_summary$vcov[1]
-random_sd <- sqrt(random_variance)
-
-# Create a data frame for random effects
-random_effects_df <- data.frame(
-  Term = c("Random intercept (variance)", "Random intercept (std. dev.)"),
-  Estimate = c(random_variance, random_sd),
-  Std.Error = NA,  # Random effects typically don't have standard errors
-  t.value = NA,    # No t-value for random effects
-  CI.Lower = NA,   # No confidence intervals for random effects
-  CI.Upper = NA
-)
-colnames(random_effects_df) <- c("Term","Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
-#combine fixed and random effects into single table
-# Add term names to the fixed effects
-fixed_effects_df$Term <- rownames(fixed_effects_df)
-
-# Combine fixed and random effects
-combined_effects <- rbind(
-  fixed_effects_df[, c("Term", "Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")],
-  random_effects_df
-)
-
-# Convert to LaTeX table
-latex_table <- xtable(
-  combined_effects,
-  label = "tab:model_summary_m8", digits = 4, align = c(rep("l",7)), display = c("s","s","G","G","G","G","G"))
-
-# Save as a .tex file
-sink("results/model_summary_table_NDVI_m8.tex")
-print(latex_table, include.rownames = FALSE)
-sink()
 
