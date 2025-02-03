@@ -121,9 +121,11 @@ confint(m16)
 AIC(m16)
 vif(m16)
 moran.test(resid(m16),listw =listw)
+m17 <- lmer(change_in_treeline_elevation~Lat + (1|Peak_ID), data = regs)
+m18 <- lmer(change_in_treeline_elevation~ Long + (1|Peak_ID), data = regs)
 
 # best linear mixed model is m8
-mods<-list(m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12,m13,m14,m15,m16)
+mods<-list(m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12,m13,m14,m15,m16,m17,m18)
 aictab(cand.set = mods)
 confint(m8) #significant interaction between long and lat
 
@@ -150,11 +152,13 @@ lmer_terms <- c(
   "Distance to the Coast (m) + Direction + Latitude + Longitude",
   "Distance to the Coast (m) + Direction + Latitude x Longitude",
   "Distance to the Coast (m) + Direction + # Stations After Treeline  + Latitude + Longitude",
-  "Distance to the Coast (m) + Direction + # Stations After Treeline  + Latitude x Longitude"
+  "Distance to the Coast (m) + Direction + # Stations After Treeline  + Latitude x Longitude",
+  "Latitude",
+  "Longitude"
 )
 
 # Calculate delta AIC and weights
-lmer_aic_values <- sapply(mods[1:16], AIC)
+lmer_aic_values <- sapply(mods[1:18], AIC)
 #lmer_edf_values <- sapply(mods[1:16], extractAIC)[1,]
 delta_aic_lmer <- lmer_aic_values - min(lmer_aic_values)
 aic_weights_lmer <- exp(-0.5 * delta_aic_lmer) / sum(exp(-0.5 * delta_aic_lmer))
@@ -294,10 +298,14 @@ m16_spamm<-fitme(change_in_treeline_elevation~dist_coast+
 summary(m16_spamm)
 AIC(m16_spamm)
 moran.test(resid(m16_spamm),listw =listw)
+m17_spamm<-fitme(change_in_treeline_elevation~Lat+Matern(1|Long +Lat), 
+                 data = regs, method = "REML")
+m18_spamm<-fitme(change_in_treeline_elevation~Long +Matern(1|Long +Lat), 
+                 data = regs, method = "REML")
 #best spatial mixed model
 mods_spamm<-list(m1_spamm,m2_spamm,m3_spamm,m4_spamm,m5_spamm,m6_spamm,m7_spamm,
            m8_spamm,m9_spamm,m10_spamm,m11_spamm,m12_spamm,m13_spamm,m14_spamm,
-           m15_spamm,m16_spamm)
+           m15_spamm,m16_spamm,m17_spamm,m18_spamm)
 # Extract AIC for each model
 aic_values_spamm <- sapply(mods_spamm, extractAIC)
 
