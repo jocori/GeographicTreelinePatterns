@@ -125,10 +125,12 @@ summary(m16)
 confint(m16)
 AIC(m16)
 vif(m16)
+m17 <- lmer(change_in_treeline_NDVI~Lat + (1|Peak_ID),data = regs)
+m18 <- lmer(change_in_treeline_NDVI~Long + (1|Peak_ID),data = regs)
 #moran.test(resid(m16),listw =listw)
 
 # best linear mixed model is m1
-mods<-list(m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12,m13,m14,m15,m16)
+mods<-list(m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12,m13,m14,m15,m16,m17,m18)
 aictab(cand.set = mods)
 confint(m8) #significant interaction between long and lat
 
@@ -154,12 +156,14 @@ lmer_terms <- c(
   "Distance to the Coast (m) + Direction + Latitude + Longitude",
   "Distance to the Coast (m) + Direction + Latitude x Longitude",
   "Distance to the Coast (m) + Direction + # Stations After Treeline  + Latitude + Longitude",
-  "Distance to the Coast (m) + Direction + # Stations After Treeline  + Latitude x Longitude"
+  "Distance to the Coast (m) + Direction + # Stations After Treeline  + Latitude x Longitude",
+  "Latitude",
+  "Longitude"
 )
 
 # Calculate delta AIC and weights
-lmer_aic_values <- sapply(mods[1:16], AIC)
-#lmer_edf_values <- sapply(mods[1:16], extractAIC)[1,]
+lmer_aic_values <- sapply(mods[1:18], AIC)
+#lmer_edf_values <- sapply(mods[1:18], extractAIC)[1,]
 delta_aic_lmer <- lmer_aic_values - min(lmer_aic_values)
 aic_weights_lmer <- exp(-0.5 * delta_aic_lmer) / sum(exp(-0.5 * delta_aic_lmer))
 
@@ -300,10 +304,14 @@ m16_spamm<-fitme(change_in_treeline_NDVI~dist_coast+
 summary(m16_spamm)
 AIC(m16_spamm)
 moran.test(resid(m16_spamm),listw =listw)
+m17_spamm<-fitme(change_in_treeline_NDVI~Lat +Matern(1|Long +Lat), 
+                 data = regs, method = "REML")
+m18_spamm<-fitme(change_in_treeline_NDVI~Long+Matern(1|Long +Lat), 
+                 data = regs, method = "REML")
 #best spatial mixed model
 mods_spamm<-list(m1_spamm,m2_spamm,m3_spamm,m4_spamm,m5_spamm,m6_spamm,m7_spamm,
                  m8_spamm,m9_spamm,m10_spamm,m11_spamm,m12_spamm,m13_spamm,m14_spamm,
-                 m15_spamm,m16_spamm)
+                 m15_spamm,m16_spamm,m17_spamm,m18_spamm)
 # Extract AIC for each model
 aic_values_spamm <- sapply(mods_spamm, extractAIC)
 
@@ -315,7 +323,7 @@ delta_AIC_spamm <-aic_values_only_spamm - min(aic_values_only_spamm) # calculate
 AIC_weight_spamm <-exp(-0.5 * delta_AIC_spamm) / 
   sum(exp(-0.5 * delta_AIC_spamm)) #calculate AIC weights
 # Create a data frame
-model_names_spamm <- paste0("m", 1:16, "_spamm")
+model_names_spamm <- paste0("m", 1:18, "_spamm")
 comparison_table_spamm <- data.frame(
   Terms = spamm_terms,
   AIC = format_numeric(aic_values_only_spamm),
@@ -358,9 +366,9 @@ aic_values_only_all <- aic_values_all[2, ]
 
 # Create a data frame
 # Generate model names for the first group
-model_names_group1 <- rep("Linear",16)
+model_names_group1 <- rep("Linear",18)
 # Generate model names for the second group
-model_names_group2 <- rep("Spatial",16)
+model_names_group2 <- rep("Spatial",18)
 
 # Combine all the model names into one vector
 model_names_all <- c(model_names_group1, model_names_group2)
