@@ -18,7 +18,7 @@ summary(m2)
 library(ggplot2)
 library(patchwork)
 
-#Figure 5
+#Figure 4
 # Define a function to format coordinates with degree symbols
 format_lat <- function(lat) {
   ifelse(lat >= 0, paste0(lat, "° N"), paste0(abs(lat), "° S"))
@@ -37,12 +37,18 @@ lat_plot <- regs %>%
   ggplot(aes(x = Lat, y = change_in_treeline_elevation)) +
   geom_point(colour = "#a845b9") +
   geom_abline(slope = -14.63, intercept = 611.69, colour = "black", lwd = 0.75) +
-  labs(x = "Latitude", y = "Change in Treeline Elevation") +
-  scale_x_continuous(limits = c(10, 50),  # Ensure the entire latitude range is covered
-                     breaks = seq(10, 50, by = 10),
-                     labels = format_lat) +  # Apply latitude formatting
-  annotate("text", x = 10, y = max(regs$change_in_treeline_elevation),
-           label = "(a)", hjust = -0.1, vjust = 0.2, size = 5) +
+  labs(x = "Latitude", y = "Change in Treeline Elevation (m)") +
+  scale_x_continuous(limits = c(0, 55),
+                     breaks = seq(0, 55, by = 10),
+                     labels = format_lat) +
+  annotate("text", 
+           x = 0,  # Shift slightly inside
+           y = 4000,  # Avoid placing at max
+           label = "(a)", 
+           hjust = 0, 
+           vjust = 1, 
+           size = 5)+
+
   theme_minimal() +
   theme(
     panel.grid = element_blank(),
@@ -50,8 +56,10 @@ lat_plot <- regs %>%
     axis.text = element_text(family = "sans"),
     axis.ticks = element_line(),
     plot.title = element_blank(),
-    axis.title = element_text(size = 13, family = "sans")
+    axis.title = element_text(size = 13, family = "sans"),
+    margin(0,0,l = 5,0)
   )
+
 
 # Create the Longitude plot
 long_plot <- regs %>%
@@ -59,8 +67,12 @@ long_plot <- regs %>%
   geom_point(colour = "#5b6c65") +
   geom_abline(slope = 14.313, intercept = 1636.478, colour = "black", lwd = 0.75) +
   labs(x = "Longitude", y = element_blank()) +
-  scale_x_continuous(labels = format_long) +  # Apply longitude formatting
-  annotate("text", x = min(regs$Long), y = max(regs$change_in_treeline_elevation),
+  scale_x_continuous(
+    limits = c(-130, -80),
+    breaks = seq(-130, -80, by = 10),
+    labels = function(x) paste0(abs(x), "°W")  # Convert negatives to absolute values with "°W"
+  ) +  # Apply longitude formatting
+  annotate("text", x = min(regs$Long), y = 4000,
            label = "(b)", hjust = -0.1, vjust = 0.2, size = 5) +
   theme_minimal() +
   theme(
@@ -158,7 +170,7 @@ regs %>%
   ggplot(aes(x = Lat, y = change_in_treeline_NDVI)) +
   geom_point(colour = "#a845b9") +
   geom_abline(slope = -0.0035301, intercept = 0.1308954, colour = "black", lwd = 0.75) +
-  labs(x = "Latitude", y = "Change in Treeline NDVI") +
+  labs(x = "Latitude", y = "Change in Treeline NDVI (2017 - 2018)") +
   scale_x_continuous(limits = c(10, 50),  # Ensure the entire latitude range is covered
                      breaks = seq(10, 50, by = 10),
                      labels = format_lat) +  # Apply latitude formatting
