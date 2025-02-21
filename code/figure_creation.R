@@ -155,8 +155,8 @@ regs %>%
   geom_point(colour = "#a845b9") +
   geom_abline(slope = -0.0035301, intercept = 0.1308954, colour = "black", lwd = 0.75) +
   labs(x = "Latitude", y = "Change in Treeline NDVI (2017 - 2018)") +
-  scale_x_continuous(limits = c(10, 50),  # Ensure the entire latitude range is covered
-                     breaks = seq(10, 50, by = 10),
+  scale_x_continuous(limits = c(0, 55),
+                     breaks = seq(0, 55, by = 10),
                      labels = format_lat) +
   theme_minimal() +
   theme(
