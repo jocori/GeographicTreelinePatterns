@@ -43,7 +43,7 @@ lat_plot <- regs %>%
                      labels = format_lat) +
   annotate("text", 
            x = 0,  # Shift slightly inside
-           y = 4000,  # Avoid placing at max
+           y = 4000,  
            label = "(a)", 
            hjust = 0, 
            vjust = 1, 
@@ -88,24 +88,10 @@ long_plot <- regs %>%
 lat_plot + long_plot # Combines the two plots side by side
 dev.off()
 
-#distance to coast vs longitude
-regs %>%
-  ggplot(aes(x = dist_coast, y = Long)) + 
-  geom_point(size = 3, alpha = 0.7) + 
-  #geom_abline(slope = -14.63, intercept = 611.69, colour = "orange", lwd = 1.5) +
-  #geom_abline(slope = 14.313, intercept = 1636.478, colour = "black", lwd = 1.5) +
-  xlab("Distance to Coast (m)") + 
-  ylab("Longitude") + theme_minimal() +
-  theme(panel.grid = element_blank(), axis.line = 
-          element_line(colour = "black", linewidth = 0.25), 
-        axis.text = element_text(family = "sans"), 
-        axis.ticks = element_line(),
-        axis.title = element_text(size = 13, family = "sans"))
 
 
 
-
-#malinche
+#malinche (figure 2)
 dat<- read.csv("data/20231208_Averages.csv")
 
 regs<-regs[,-c(20:24)]
@@ -161,8 +147,6 @@ format_long <- function(long) {
   ifelse(long >= 0, paste0(long, "° E"), paste0(abs(long), "° W"))
 }
 
-#define panel labels based on journal specifications
-tags<- c("(a)","(b)")
 
 # create latitude plot
 png("figures/figure5.png", width = 7.5, height = 5, units = "in", res = 300)
@@ -173,9 +157,7 @@ regs %>%
   labs(x = "Latitude", y = "Change in Treeline NDVI (2017 - 2018)") +
   scale_x_continuous(limits = c(10, 50),  # Ensure the entire latitude range is covered
                      breaks = seq(10, 50, by = 10),
-                     labels = format_lat) +  # Apply latitude formatting
-  annotate("text", x = 10, y = max(regs$change_in_treeline_NDVI),
-           label = "(a)", hjust = -0.1, vjust = 0.2, size = 5) +
+                     labels = format_lat) +
   theme_minimal() +
   theme(
     panel.grid = element_blank(),
@@ -185,7 +167,7 @@ regs %>%
     plot.title = element_blank(),
     axis.title = element_text(size = 13, family = "sans")
   )
-
+dev.off()
 # Create the Longitude plot
 #long_plot <- regs %>%
 #  ggplot(aes(x = Long, y = change_in_treeline_NDVI)) +
@@ -207,7 +189,7 @@ regs %>%
 
 # Combine the plots
 #lat_plot + long_plot # Combines the two plots side by side
-dev.off()
+
 
 ##figure 6.....didn't end up using these but scared to delete the code just in case
 #read in full dataset 
