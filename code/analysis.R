@@ -6,6 +6,7 @@ library(lme4)
 library(AICcmodavg)
 # read in data
 regs_full<-read.csv("data/Regressions_28Oct.csv", header = TRUE)
+unique(regs_full$Peak)
 count(regs_full[regs_full$Significance >= 0.05,])
 
 #Keep linear models only
