@@ -106,5 +106,5 @@ write.csv(regs, "data/regs_final22jan25.csv")
 
 problems<- regs %>% filter(change_in_treeline_elevation > 500 | change_in_treeline_elevation < -500)
 write.csv(problems,"data/extreme_values.csv")
-write.csv(regs,"testing_data_includes_slope")
-regs<-read.csv("testing_data_includes_slope")
+write.csv(regs,"data/testing_data_includes_slope.csv")
+regs<-read.csv("data/testing_data_includes_slope.csv")
