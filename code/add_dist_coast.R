@@ -2,10 +2,13 @@
 setwd("~/Desktop/KU/Projects/GeographicTreelinePatterns")
 # read in data
 regs_full<-read.csv("data/Regressions_28Oct.csv", header = TRUE)
-count(regs_full[regs_full$Significance >= 0.05,])
 
+regs <- regs_full[regs_full$Year %in% c("Avg8488", "Avg1317"),]
+
+unique(regs$Year)
 #Keep linear models only
-regs<-regs_full[regs_full$Regression_Type == "Linear",]
+regs<-regs[regs$Regression_Type == "Linear",]
+unique(regs$Year) #gets rid of 1317 here....why????
 
 #Keep only significant models
 regs<-regs[regs$Significance<=0.05,]
@@ -13,8 +16,7 @@ regs<-regs[regs$Significance<=0.05,]
 #Keep only models with negative slope
 regs<-regs[regs$Slope < 0,]
 
-#Keep only average NDVI NOT Max (relevant in year calculation)
-regs <- regs %>% filter(Year %in% c("Avg8488", "Avg9802", "Avg1317"))
+unique(regs$Year)
 
 #Which mountains are excluded now?
 x1<-unique(regs$Peak)
@@ -24,11 +26,11 @@ setdiff(x1,x2)
 
 #remove extraneous columns
 regs<-regs[,!(names(regs)%in%c("Regression_Type","X"))]
-
+head(regs)
 # Filter out peak-direction combinations that do not have both years
-regs <- regs %>%
+regs<-regs %>%
   group_by(Peak, Direction) %>%
-  filter(all(c("Avg8488", "Avg1317") %in% Year)) %>%
+  filter(n_distinct(Year) == 2 & all(c("Avg8488", "Avg1317") %in% Year)) %>%
   ungroup()
 
 present<-regs[regs$Year == "Avg1317",]
@@ -36,7 +38,7 @@ past<-regs[regs$Year == "Avg8488",]
 
 #present day regression equation
 present$present_NDVI<-(present$Treeline_elevation*present$Slope) + present$Intercept
-
+unique(regs$Peak)
 
 
 #plug present day NDVI at treesbegin value into past regression equation to calculate past elevation
@@ -75,6 +77,11 @@ coast<-read.csv("data/coastdist_peaks.csv")
 colnames(coast)[5] <- "dist_coast"
 coast<- coast[,-c(1:2)]
 library(dplyr)
+dist_coast<- read.csv("data/Regressions12Nov24.csv")
+
+# Add only the 'dist_coast' column to 'regs'
+regs <- regs %>%
+  left_join(dist_coast %>% select(Peak, Direction, dist_coast), by = c("Peak", "Direction"))
 
 regs <- regs %>%
   left_join(coast, by = c("Lat" = "Lat", "Long" = "Long"))
