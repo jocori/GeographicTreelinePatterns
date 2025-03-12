@@ -7,6 +7,8 @@ library(AICcmodavg)
 # read in data
 regs_full<-read.csv("data/Regressions_28Oct.csv", header = TRUE)
 count(regs_full[regs_full$Significance >= 0.05,])
+
+##cleaning data for response variable calculation
 #remove mt. Washington
 regs <-regs_full[regs_full$Peak != "Mt. Washington",]
 #Keep linear models only
@@ -31,13 +33,14 @@ unique(regs$Peak)
 #remove extraneous columns
 regs<-regs[,!(names(regs)%in%c("Regression_Type","X","Best_Model"))]
 ####
+
 ##All models with change in NDVI as response variable
 ##have treeline_elevation...this is present day
 ## equations are ndvi~elevation...so ndvi = m(elevation) + b
 ## present day NDVI = m (elevation 2017) + b
 ## solve for past elevation....NDVI from present day calculation = m (elevation past) + b
 
-
+##### change in treeline ndvi
 ####NDVI at 2017 treeline elevation
 #separate past and present
 
@@ -45,7 +48,7 @@ regs<-regs[,!(names(regs)%in%c("Regression_Type","X","Best_Model"))]
 regs$treeline_ndvi<-(regs$Slope*regs$Treeline_elevation) + regs$Intercept
 
 
-# Calculate the change in treeline elevation
+# Calculate the change in treeline ndvi
 regs <- regs %>%
   group_by(Peak, Direction) %>%
   mutate(
@@ -55,7 +58,7 @@ regs <- regs %>%
 
 # NDVI should get higher...point should be bare rock in 1980s and green in 2017
 
-##other response variable...change in treeline elevation
+##### CHANGE IN TREELINE ELEVATION
 past<-regs[regs$Year == "Avg8488",]
 present<-regs[regs$Year == "Avg1317",]
 #present day regression equation
@@ -88,24 +91,8 @@ regs<-regs[,-c(3,10,12:13)]
 regs <- regs %>%
   distinct()
 
-#Which mountains are excluded now?
-x1<-unique(regs$Peak)
-x2<-unique(regs_full$Peak)
-setdiff(x2, x1) #"Mt. Harrison"   "Mt. Ovington"   "Mt. Timpanogos" "Star Peak"  
-
-###### mountains excluded from analysis ######
-## "Mt. Harrison"   "Mt. Ovington"   "Mt. Timpanogos" "Star Peak"  
-
-unique(regs$Peak)
-unique(regs_full$Peak)
-
 write.csv(regs, "data/regsJan2025.csv")
 regs<- read.csv("data/regsJan2025.csv")
-dist_coast<- read.csv("data/Regressions12Nov24.csv")
-
-# Add only the 'dist_coast' column to 'regs'
-regs <- regs %>%
-  left_join(dist_coast %>% select(Peak, Direction, dist_coast), by = c("Peak", "Direction"))
 
 #Add columns for scaled longitude and latitude
 regs <- regs %>%
@@ -113,3 +100,11 @@ regs <- regs %>%
          Long_scaled = scale(Long))
 #save final dataset
 write.csv(regs, "data/regs_final22jan25.csv")
+
+
+###troubleshooting why extreme values
+
+problems<- regs %>% filter(change_in_treeline_elevation > 500 | change_in_treeline_elevation < -500)
+write.csv(problems,"data/extreme_values.csv")
+write.csv(regs,"testing_data_includes_slope")
+regs<-read.csv("testing_data_includes_slope")
