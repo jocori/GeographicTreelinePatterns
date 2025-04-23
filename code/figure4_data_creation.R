@@ -13,7 +13,22 @@ unique_peaks <- reg %>%
 print(unique_peaks)
 #Remove mt. washington as it's too spatially different from others
 unique_peaks<-unique_peaks[unique_peaks$Peak != "Mt. Washington",]
+#for all unqiue peaks, 
+#get average slope, latitude, and longitude for each mountain, 
+#then put these averages as new columns in unique peaks 
+# compute the averages from the full `reg` data
+avg_stats <- reg %>%
+  filter(Peak != "Mt. Washington") %>%
+  group_by(Peak) %>%
+  summarise(
+    slope     = mean(Slope,     na.rm = TRUE),
+    latitude  = mean(Lat,  na.rm = TRUE),
+    longitude = mean(Long, na.rm = TRUE)
+  )
 
+# join them back onto your unique_peaks
+unique_peaks <- unique_peaks %>%
+  left_join(avg_stats, by = "Peak")
 # add column for sign of slope
 #if positive -> 1
 #if negative -> 0
