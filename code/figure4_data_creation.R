@@ -24,7 +24,7 @@ print(unique_peaks)
 #if positive -> 1
 #if negative -> 0
 
-unique_peaks$sign <- ifelse(unique_peaks$slope > 0, 1,0)
+unique_peaks$sign <- ifelse(unique_peaks$Slope > 0, 1,0)
 mean(reg$Slope)
 mean(unique_peaks$Slope)
 write.csv(unique_peaks, "data/figure4_peaks.csv")
