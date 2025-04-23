@@ -18,7 +18,7 @@ unique_peaks<-unique_peaks[unique_peaks$Peak != "Mt. Washington",]
 #if positive -> 1
 #if negative -> 0
 
-reg$sign <- ifelse(reg$Slope > 0, 1,0)
+unique_peaks$sign <- ifelse(unique_peaks$Slope > 0, 1,0)
 
 
 write.csv(unique_peaks, "data/figure4_peaks.csv")
