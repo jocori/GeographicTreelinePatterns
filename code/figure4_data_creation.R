@@ -18,11 +18,6 @@ unique_peaks<-unique_peaks[unique_peaks$Peak != "Mt. Washington",]
 #if positive -> 1
 #if negative -> 0
 
-if (reg$Slope > 0){
-  reg$sign <- 1
-} else {
-  reg$sign <-0
-}
 reg$sign <- ifelse(reg$Slope > 0, 1,0)
 
 
