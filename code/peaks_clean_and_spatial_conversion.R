@@ -11,7 +11,7 @@ library(sf)
 
 
 # Convert to a spatial data frame
-# Assuming your longitude and latitude columns are named 'long' and 'lat'
+
 spatial_peaks <- st_as_sf(peaks, coords = c("long", "lat"), crs = 4326)
 
 # Check the structure
