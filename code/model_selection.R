@@ -4,6 +4,8 @@ setwd("~/Desktop/KU/Projects/GeographicTreelinePatterns")
 if (!dir.exists("results")) {
   dir.create("results")
 }
+
+
 #load in packages
 library(dplyr)
 library(lme4)
