@@ -15,6 +15,8 @@ library(sp)
 library(spaMM) # spatial mixed models
 library(vegan) # PCNM
 library(RSpectra) # for fast calculation of extreme eigenvector in spamm models
+install.packages("MuMIn")
+library(MuMIn)
 #read in data
 regs<- read.csv("data/regs_final22jan25.csv")
 #check for correlation among predictor variables
