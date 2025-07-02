@@ -149,12 +149,12 @@ format_long <- function(long) {
 
 
 # create latitude plot
-png("figures/figure5.png", width = 7.5, height = 5, units = "in", res = 300)
+png("figures/figure05.png", width = 7.5, height = 5, units = "in", res = 300)
 regs %>%
   ggplot(aes(x = Lat, y = change_in_treeline_NDVI)) +
   geom_point(colour = "#a845b9") +
   geom_abline(slope = -0.0035301, intercept = 0.1308954, colour = "black", lwd = 0.75) +
-  labs(x = "Latitude", y = "Change in Treeline NDVI (2017 - 2018)") +
+  labs(x = "Latitude", y = "Change in Treeline NDVI") +
   scale_x_continuous(limits = c(0, 55),
                      breaks = seq(0, 55, by = 10),
                      labels = format_lat) +
