@@ -300,6 +300,7 @@ AIC(m16_spamm)
 moran.test(resid(m16_spamm),listw =listw)
 m17_spamm<-fitme(change_in_treeline_elevation~Lat+Matern(1|Long +Lat), 
                  data = regs, method = "REML")
+summary(m17_spamm)
 m18_spamm<-fitme(change_in_treeline_elevation~Long +Matern(1|Long +Lat), 
                  data = regs, method = "REML")
 #best spatial mixed model
