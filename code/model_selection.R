@@ -17,7 +17,8 @@ library(sp)
 library(spaMM) # spatial mixed models
 library(vegan) # PCNM
 library(RSpectra) # for fast calculation of extreme eigenvector in spamm models
-library(MuMIn)
+library(MuMIn) #for calculating R^2 values
+library(xtable) #for generating LaTeX tables
 #read in data
 regs<- read.csv("data/regs_final22jan25.csv")
 #check for correlation among predictor variables
@@ -129,8 +130,11 @@ m18 <- lmer(change_in_treeline_elevation~ Long + (1|Peak_ID), data = regs)
 
 # best linear mixed model is m8
 mods<-list(m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12,m13,m14,m15,m16,m17,m18)
-aictab(cand.set = mods)
+aictab(cand.set = mods, modnames = names(mods))
 confint(m8) #significant interaction between long and lat
+
+#calculate marginal and conditional r-squared values
+r.squaredGLMM(m8)
 
 # Helper function to format numbers
 format_numeric <- function(x) {
@@ -304,6 +308,10 @@ moran.test(resid(m16_spamm),listw =listw)
 m17_spamm<-fitme(change_in_treeline_elevation~Lat+Matern(1|Long +Lat), 
                  data = regs, method = "REML")
 summary(m17_spamm)
+
+#calculate pseudo R2 
+pseudoR2(m17_spamm, nullform = ~1)
+
 m18_spamm<-fitme(change_in_treeline_elevation~Long +Matern(1|Long +Lat), 
                  data = regs, method = "REML")
 #best spatial mixed model
@@ -502,116 +510,178 @@ print(latex_table_best,
       table.placement = "t")
 sink()
 
-## now I need model output tables for m8, m17_spamm
+### Model Summary Table for m8
 
-###m8
-
-# Extract fixed effects summary from the model
+# Extract fixed effects
 m8.fixed_effects_df <- as.data.frame(coef(summary(m8)))
 
-# Add confidence intervals if needed
+# Add confidence intervals
 m8.conf_intervals <- confint(m8)
-m8.conf_intervals<-m8.conf_intervals[3:14,]
+m8.conf_intervals <- m8.conf_intervals[3:14, ]  # Remove intercept + random effects CIs
 
-# Add confidence intervals to the fixed effects table
-m8.fixed_effects_df$CI.Lower <- m8.conf_intervals[, 1]
-m8.fixed_effects_df$CI.Upper <- m8.conf_intervals[, 2]
-# Rename columns for clarity
-colnames(m8.fixed_effects_df) <- c("Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
-rownames(m8.fixed_effects_df) <- c("Intercept","# Stations After Treeline","Direction (North)","Direction (Northeast)","Direction (Northwest)"
-                                   ,"Direction (South)","Direction (Southeast)","Direction (Southwest)","Direction (West)","Latitude",
-                                   "Longitude","Latitude x Longitude")
+# Add CIs to fixed effects
+m8.fixed_effects_df$`Lower 95% CI` <- m8.conf_intervals[, 1]
+m8.fixed_effects_df$`Upper 95% CI` <- m8.conf_intervals[, 2]
 
-#extract random effects
+# Rename columns
+colnames(m8.fixed_effects_df)[1:3] <- c("Estimate", "SE", "T-Value")
+
+# Add term names (this order should match model output)
+m8.fixed_effects_df$Term <- c(
+  "Intercept",
+  "# Stations After Treeline",
+  "Direction (North)",
+  "Direction (Northeast)",
+  "Direction (Northwest)",
+  "Direction (South)",
+  "Direction (Southeast)",
+  "Direction (Southwest)",
+  "Direction (West)",
+  "Latitude",
+  "Longitude",
+  "Latitude × Longitude"
+)
+
+# Reorder columns
+m8.fixed_effects_df <- m8.fixed_effects_df[, c("Term", "Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")]
+
+# --- RANDOM EFFECTS ---
+
+# Extract random intercept variance
 m8.random_effects <- VarCorr(m8)
-m8.random_effects_summary <- as.data.frame(m8.random_effects)
+m8.random_intercept_var <- attr(m8.random_effects$Peak_ID, "stddev")^2
+m8.random_intercept_sd  <- sqrt(m8.random_intercept_var)
 
-# Extract random intercept variance and standard deviation
-m8.random_variance <- m8.random_effects_summary$vcov[1]
-m8.random_sd <- sqrt(m8.random_variance)
-
-# Create a data frame for random effects
 m8.random_effects_df <- data.frame(
   Term = c("Random intercept (variance)", "Random intercept (std. dev.)"),
-  Estimate = c(m8.random_variance, m8.random_sd),
-  SE = NA,  # Random effects typically don't have standard errors
-  'TValue' = NA,    # No t-value for random effects
-  'LowerCI' = NA,   # No confidence intervals for random effects
-  'UpperCI' = NA
+  Estimate = c(m8.random_intercept_var, m8.random_intercept_sd),
+  SE = NA,
+  `T-Value` = NA,
+  `Lower 95% CI` = NA,
+  `Upper 95% CI` = NA
 )
-colnames(m8.random_effects_df) <- c("Term","Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
-#combine fixed and random effects into single table
-# Add term names to the fixed effects
-m8.fixed_effects_df$Term <- rownames(m8.fixed_effects_df)
 
-# Combine fixed and random effects
+# --- RESIDUAL VARIANCE ---
+
+m8.residual_var <- attr(m8.random_effects, "sc")^2
+m8.residual_sd  <- sqrt(m8.residual_var)
+
+m8.residual_df <- data.frame(
+  Term = c("Residual (variance)", "Residual (std. dev.)"),
+  Estimate = c(m8.residual_var, m8.residual_sd),
+  SE = NA,
+  `T-Value` = NA,
+  `Lower 95% CI` = NA,
+  `Upper 95% CI` = NA
+)
+
+# --- COMBINE ALL TOGETHER ---
+
+# ensure column names match
+colnames(m8.random_effects_df) <- colnames(m8.fixed_effects_df)
+colnames(m8.residual_df) <- colnames(m8.fixed_effects_df)
+
 m8.combined_effects <- rbind(
-  m8.fixed_effects_df[, c("Term", "Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")],
-  m8.random_effects_df
+  m8.fixed_effects_df,
+  m8.random_effects_df,
+  m8.residual_df
 )
 
-# Convert to LaTeX table
+# Create LaTeX table
 m8.latex_table <- xtable(
   m8.combined_effects,
-  label = "tab:model_summarym8",
-  digits = 4, align = c(rep("l",7)), display = c("s","G","G","G","G","G","G"))
+  label = "tab:model_summary_m8",
+  digits = 4,
+  align = c("l", rep("G", 6)),
+  display = c("s", "s", "f", "f", "f", "f", "f")
+)
 
-# Save as a .tex file
+# Export to .tex file
 sink("results/model_summary_table_elevation_m8.tex")
 print(m8.latex_table, include.rownames = FALSE)
 sink()
 
-#### m17_spamm
-# Extract fixed effects summary from the model
-m17spamm.fixed_effects_df <- as.data.frame(summary(m17_spamm, details = FALSE, verbose = FALSE)$beta_table)
+# ---- Model Summary Table for m17_spamm ----
 
-# Add confidence intervals if needed
-m17spamm.conf_intervals <- confint(m17_spamm, parm = names(fixef(m17_spamm)))
-m17spamm.conf_intervals<-attr(m17spamm.conf_intervals,"table")
+# Extract fixed effects summary
+m17.fixed_df <- as.data.frame(summary(m17_spamm, details = FALSE)$beta_table)
 
-# Add confidence intervals to the fixed effects table
-m17spamm.fixed_effects_df$CI.Lower <- m17spamm.conf_intervals[, 1]
-m17spamm.fixed_effects_df$CI.Upper <- m17spamm.conf_intervals[, 2]
+# Add confidence intervals
+m17.confint <- confint(m17_spamm, parm = names(fixef(m17_spamm)))
+m17.confint <- attr(m17.confint, "table")
 
-# Rename columns for clarity
-colnames(m17spamm.fixed_effects_df) <- c("Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
-rownames(m17spamm.fixed_effects_df) <- c("Intercept","Latitude")
-#extract random effects
-m17spamm.random_effects <- VarCorr(m17_spamm)
-m17spamm.random_effects_summary <- as.data.frame(m17spamm.random_effects[1,])
+# Add confidence intervals to fixed effects table
+m17.fixed_df$`Lower 95% CI` <- m17.confint[, 1]
+m17.fixed_df$`Upper 95% CI` <- m17.confint[, 2]
 
-# Create a data frame for random effects
-m17spamm.random_effects_df <- data.frame(
+# Rename columns
+colnames(m17.fixed_df)[1:3] <- c("Estimate", "SE", "T-Value")
+
+# Add term names
+m17.fixed_df$Term <- c("Intercept","Latitude")
+
+# Reorder columns
+m17.fixed_df <- m17.fixed_df[, c("Term", "Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")]
+
+# ---- Extract Variance Components ----
+
+# Random effect variance (lambda) and SD
+m17.re.var <- m17_spamm$lambda[[1]]
+m17.re.sd  <- sqrt(m17.re.var)
+
+# Residual variance (phi) and SD
+m17.resid.var <- m17_spamm$phi
+m17.resid.sd  <- sqrt(m17.resid.var)
+
+# ---- Create Random and Residual Effects Data Frames ----
+
+# Random intercept effects
+m17.re_df <- data.frame(
   Term = c("Random intercept (variance)", "Random intercept (std. dev.)"),
-  Estimate = c(m17spamm.random_effects_summary[,3],m17spamm.random_effects_summary[,4]),
-  Std.Error = NA,  # Random effects typically don't have standard errors
-  t.value = NA,    # No t-value for random effects
-  CI.Lower = NA,   # No confidence intervals for random effects
-  CI.Upper = NA
-)
-colnames(m17spamm.random_effects_df) <- c("Term","Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
-#combine fixed and random effects into single table
-# Add term names to the fixed effects
-m17spamm.fixed_effects_df$Term <- rownames(m17spamm.fixed_effects_df)
-
-# Combine fixed and random effects
-m17spamm.combined_effects <- rbind(
-  m17spamm.fixed_effects_df[, c("Term", "Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")],
-  m17spamm.random_effects_df
+  Estimate = c(m17.re.var, m17.re.sd),
+  SE = NA,
+  `T-Value` = NA,
+  `Lower 95% CI` = NA,
+  `Upper 95% CI` = NA
 )
 
-# Convert to LaTeX table
-m17spamm.latex_table <- xtable(
-  m17spamm.combined_effects,
+# Residual variance
+m17.resid_df <- data.frame(
+  Term = c("Residual (variance)", "Residual (std. dev.)"),
+  Estimate = c(m17.resid.var, m17.resid.sd),
+  SE = NA,
+  `T-Value` = NA,
+  `Lower 95% CI` = NA,
+  `Upper 95% CI` = NA
+)
+
+# ---- Standardize column names for binding ----
+colnames(m17.re_df) <- colnames(m17.fixed_df)
+colnames(m17.resid_df) <- colnames(m17.fixed_df)
+
+# ---- Combine all into final summary table ----
+m17.combined <- rbind(
+  m17.fixed_df,
+  m17.re_df,
+  m17.resid_df
+)
+
+
+
+# ---- Convert to LaTeX table ----
+
+m17.latex_table <- xtable(
+  m17.combined,
   label = "tab:model_summary_m17spamm",
-  digits = 4, align = c(rep("l",7)), display = c("s","G","G","G","G","G","G")
+  digits = 4,
+  align = c("l", rep("G", 6)),
+  display = c("s", "s", "f", "f", "f", "f", "f")
 )
 
-# Save as a .tex file
+# ---- Save as .tex file ----
 sink("results/model_summary_table_elevation_m17_spamm.tex")
-print(m17spamm.latex_table, include.rownames = FALSE)
+print(m17.latex_table, include.rownames = FALSE)
 sink()
-
 
 #calculate k nearest neighbors for moran's test (test for spatial autocorrelation)
 coords <- as.matrix(cbind(regs$Long, regs$Lat))
