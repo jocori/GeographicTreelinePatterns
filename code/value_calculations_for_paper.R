@@ -89,8 +89,40 @@ summary(regs$treeline_ndvi[regs$Year == "Avg1317"]) #quartiles: 0.0640, 0.1714
 summary(regs$treeline_ndvi[regs$Year == "Avg8488"]) #quartiles: 0.08467, 0.19705
 
 median(regs$change_in_treeline_elevation) #-36.12678
-summary(regs$change_in_treeline_elevation) #quartiles: -165.09, 126.61
+sum_ele<-summary(regs$change_in_treeline_elevation) #quartiles: -165.09, 126.61
 
 median(regs$change_in_treeline_NDVI) #-0.009955125
-summary(regs$change_in_treeline_NDVI) #quartiles: -0.055891, 0.029747
+sum_ndvi<-summary(regs$change_in_treeline_NDVI) #quartiles: -0.055891, 0.029747
 
+
+# Extract the 1st and 3rd quartiles
+q1_ele <- sum_ele["1st Qu."]
+q3_ele <- sum_ele["3rd Qu."]
+
+# Filter values within the interquartile range (IQR)
+ele_values <- regs$change_in_treeline_elevation
+ele_iqr <- ele_values[ele_values >= q1_ele & ele_values <= q3_ele]
+
+# Take the absolute values and compute the mean
+mean_abs_ele_iqr <- mean(abs(ele_iqr), na.rm = TRUE)
+
+# Print result
+mean_abs_ele_iqr
+
+###ndvi
+q1_ndvi <- sum_ndvi["1st Qu."]
+q3_ndvi <- sum_ndvi["3rd Qu."]
+
+# Filter values within the interquartile range (IQR)
+ndvi_values <- regs$change_in_treeline_NDVI
+ndvi_iqr <- ndvi_values[ndvi_values >= q1_ndvi & ndvi_values <= q3_ndvi]
+
+# Take the absolute values and compute the mean
+mean_abs_ndvi_iqr <- mean(abs(ndvi_iqr), na.rm = TRUE)
+
+# Print result
+mean_abs_ndvi_iqr
+
+# 
+hist(regs$change_in_treeline_elevation, breaks = 40)
+#distribution peaks right near zero
