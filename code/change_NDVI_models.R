@@ -17,6 +17,7 @@ library(RSpectra) # for fast calculation of extreme eigenvector in spamm models
 library(xtable) #for creating latex table
 library(broom.mixed) #for adding random effects to latex table
 library(texreg)
+library(MuMIn) #for calculating R^2 values
 #read in data
 regs<- read.csv("data/regsJan2025.csv")
 dist_coast<- read.csv("data/Regressions12Nov24.csv")
@@ -187,6 +188,8 @@ write.csv(
 )
 
 ## m17 is best model
+#calculate marginal and conditional r-squared values
+r.squaredGLMM(m17)
 
 ## spatial mixed models 
 #Fit a spatially correlated random effect to check consistency
@@ -340,6 +343,9 @@ print(comparison_table_spamm)
 comparison_table_spamm <- comparison_table_spamm[order(as.numeric(comparison_table_spamm$AIC)), ]
 colnames(comparison_table_spamm)[colnames(comparison_table_spamm) == "Delta_AIC"] <- "Delta AIC"
 colnames(comparison_table_spamm)[colnames(comparison_table_spamm) == "Type"] <- "Model Type"
+
+#calculate pseudo R2 
+pseudoR2(m17_spamm, nullform = ~1)
 # Save to CSV
 write.csv(
   comparison_table_spamm,
@@ -545,112 +551,168 @@ print(latex_table_best,
 sink()
 
 
-## now I need model output tables for m17, m17_spamm, and m8
+## now I need model output tables for m17 and m17_spamm
 
 ###m17
 
-# Extract fixed effects summary from the model
-m17.fixed_effects_df <- as.data.frame(coef(summary(m17)))
+# ---- Model Summary Table for m17 (Linear Mixed Model) ----
 
-# Add confidence intervals if needed
-m17.conf_intervals <- confint(m17)
-m17.conf_intervals<-m17.conf_intervals[3:4,]
+# Extract fixed effects summary
+m17.fixed_df <- as.data.frame(coef(summary(m17)))
 
-# Add confidence intervals to the fixed effects table
-m17.fixed_effects_df$CI.Lower <- m17.conf_intervals[, 1]
-m17.fixed_effects_df$CI.Upper <- m17.conf_intervals[, 2]
-# Rename columns for clarity
-colnames(m17.fixed_effects_df) <- c("Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
-rownames(m17.fixed_effects_df) <- c("Intercept","Latitude")
+# Add confidence intervals
+m17.confint <- confint(m17)
+m17.confint <- m17.confint[3:4, ]  # exclude intercept/random
 
-#extract random effects
-m17.random_effects <- VarCorr(m17)
-m17.random_effects_summary <- as.data.frame(m17.random_effects)
+# Add CIs to fixed effects
+m17.fixed_df$`Lower 95% CI` <- m17.confint[, 1]
+m17.fixed_df$`Upper 95% CI` <- m17.confint[, 2]
 
-# Extract random intercept variance and standard deviation
-m17.random_variance <- m17.random_effects_summary$vcov[1]
-m17.random_sd <- sqrt(m17.random_variance)
+# Rename columns
+colnames(m17.fixed_df)[1:3] <- c("Estimate", "SE", "T-Value")
 
-# Create a data frame for random effects
-m17.random_effects_df <- data.frame(
+# Add term names
+m17.fixed_df$Term <- c("Intercept", "Latitude")
+
+# Reorder columns
+m17.fixed_df <- m17.fixed_df[, c("Term", "Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")]
+
+# ---- Extract Random & Residual Variance Components ----
+
+# Get random effects summary
+m17.re <- VarCorr(m17)
+m17.re.var <- attr(m17.re$Peak_ID, "stddev")^2
+m17.re.sd  <- sqrt(m17.re.var)
+
+# Get residual variance and SD
+m17.resid.var <- attr(m17.re, "sc")^2
+m17.resid.sd  <- sqrt(m17.resid.var)
+
+# ---- Create Random and Residual Effect Rows ----
+
+m17.re_df <- data.frame(
   Term = c("Random intercept (variance)", "Random intercept (std. dev.)"),
-  Estimate = c(m17.random_variance, m17.random_sd),
-  SE = NA,  # Random effects typically don't have standard errors
-  'TValue' = NA,    # No t-value for random effects
-  'LowerCI' = NA,   # No confidence intervals for random effects
-  'UpperCI' = NA
-)
-colnames(m17.random_effects_df) <- c("Term","Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
-#combine fixed and random effects into single table
-# Add term names to the fixed effects
-m17.fixed_effects_df$Term <- rownames(m17.fixed_effects_df)
-
-# Combine fixed and random effects
-m17.combined_effects <- rbind(
-  m17.fixed_effects_df[, c("Term", "Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")],
-  m17.random_effects_df
+  Estimate = c(m17.re.var, m17.re.sd),
+  SE = NA,
+  `T-Value` = NA,
+  `Lower 95% CI` = NA,
+  `Upper 95% CI` = NA
 )
 
-# Convert to LaTeX table
+m17.resid_df <- data.frame(
+  Term = c("Residual (variance)", "Residual (std. dev.)"),
+  Estimate = c(m17.resid.var, m17.resid.sd),
+  SE = NA,
+  `T-Value` = NA,
+  `Lower 95% CI` = NA,
+  `Upper 95% CI` = NA
+)
+
+# Match column names
+colnames(m17.re_df) <- colnames(m17.fixed_df)
+colnames(m17.resid_df) <- colnames(m17.fixed_df)
+
+# ---- Combine All Effects ----
+
+m17.combined <- rbind(
+  m17.fixed_df,
+  m17.re_df,
+  m17.resid_df
+)
+
+# ---- Convert to LaTeX Table ----
+
 m17.latex_table <- xtable(
-  m17.combined_effects,
+  m17.combined,
   label = "tab:m17.model_summary",
-  digits = 4, align = c(rep("l",7)), display = c("s","G","G","G","G","G","G"))
+  digits = 4,
+  align = c("l", rep("G", 6)),
+  display = c("s", "s", "f", "f", "f", "f", "f")
+)
 
-# Save as a .tex file
+# ---- Save to .tex file ----
 sink("results/model_summary_table_NDVI_m17.tex")
 print(m17.latex_table, include.rownames = FALSE)
 sink()
 
-#### m17_spamm
-# Extract fixed effects summary from the model
-m17spamm.fixed_effects_df <- as.data.frame(summary(m17_spamm, details = FALSE, verbose = FALSE)$beta_table)
 
-# Add confidence intervals if needed
-m17spamm.conf_intervals <- confint(m17_spamm, parm = names(fixef(m17_spamm)))
-m17spamm.conf_intervals<-attr(m17spamm.conf_intervals,"table")
+####  Model Summary Table for m17_spamm (NDVI response)
 
-# Add confidence intervals to the fixed effects table
-m17spamm.fixed_effects_df$CI.Lower <- m17spamm.conf_intervals[, 1]
-m17spamm.fixed_effects_df$CI.Upper <- m17spamm.conf_intervals[, 2]
+# Extract fixed effects
+m17spamm.fixed_df <- as.data.frame(summary(m17_spamm, details = FALSE)$beta_table)
 
-# Rename columns for clarity
-colnames(m17spamm.fixed_effects_df) <- c("Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
-rownames(m17spamm.fixed_effects_df) <- c("Intercept","Latitude")
-#extract random effects
-m17spamm.random_effects <- VarCorr(m17_spamm)
-m17spamm.random_effects_summary <- as.data.frame(m17spamm.random_effects[1,])
+# Add confidence intervals
+m17spamm.confint <- confint(m17_spamm, parm = names(fixef(m17_spamm)))
+m17spamm.confint <- attr(m17spamm.confint, "table")
 
-# Create a data frame for random effects
-m17spamm.random_effects_df <- data.frame(
+# Add CIs to fixed effects
+m17spamm.fixed_df$`Lower 95% CI` <- m17spamm.confint[, 1]
+m17spamm.fixed_df$`Upper 95% CI` <- m17spamm.confint[, 2]
+
+# Rename columns
+colnames(m17spamm.fixed_df)[1:3] <- c("Estimate", "SE", "T-Value")
+
+# Add term names
+m17spamm.fixed_df$Term <- c("Intercept","Latitude")
+
+# Reorder columns
+m17spamm.fixed_df <- m17spamm.fixed_df[, c("Term", "Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")]
+
+# ---- Extract Variance Components ----
+
+# Random effect variance (lambda) and SD
+m17spamm.re.var <- m17_spamm$lambda[[1]]
+m17spamm.re.sd  <- sqrt(m17spamm.re.var)
+
+# Residual variance (phi) and SD
+m17spamm.resid.var <- m17_spamm$phi
+m17spamm.resid.sd  <- sqrt(m17spamm.resid.var)
+
+# ---- Create Random and Residual Effect DataFrames ----
+
+m17spamm.re_df <- data.frame(
   Term = c("Random intercept (variance)", "Random intercept (std. dev.)"),
-  Estimate = c(m17spamm.random_effects_summary[,3],m17spamm.random_effects_summary[,4]),
-  Std.Error = NA,  # Random effects typically don't have standard errors
-  t.value = NA,    # No t-value for random effects
-  CI.Lower = NA,   # No confidence intervals for random effects
-  CI.Upper = NA
-)
-colnames(m17spamm.random_effects_df) <- c("Term","Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")
-#combine fixed and random effects into single table
-# Add term names to the fixed effects
-m17spamm.fixed_effects_df$Term <- rownames(m17spamm.fixed_effects_df)
-
-# Combine fixed and random effects
-m17spamm.combined_effects <- rbind(
-  m17spamm.fixed_effects_df[, c("Term", "Estimate", "SE", "T-Value", "Lower 95% CI", "Upper 95% CI")],
-  m17spamm.random_effects_df
+  Estimate = c(m17spamm.re.var, m17spamm.re.sd),
+  SE = NA,
+  `T-Value` = NA,
+  `Lower 95% CI` = NA,
+  `Upper 95% CI` = NA
 )
 
-# Convert to LaTeX table
+m17spamm.resid_df <- data.frame(
+  Term = c("Residual (variance)", "Residual (std. dev.)"),
+  Estimate = c(m17spamm.resid.var, m17spamm.resid.sd),
+  SE = NA,
+  `T-Value` = NA,
+  `Lower 95% CI` = NA,
+  `Upper 95% CI` = NA
+)
+
+# Ensure all have the same column names
+colnames(m17spamm.re_df) <- colnames(m17spamm.fixed_df)
+colnames(m17spamm.resid_df) <- colnames(m17spamm.fixed_df)
+
+# ---- Combine all components ----
+
+m17spamm.combined <- rbind(
+  m17spamm.fixed_df,
+  m17spamm.re_df,
+  m17spamm.resid_df
+)
+
+
+# ---- Create LaTeX Table ----
+
 m17spamm.latex_table <- xtable(
-  m17spamm.combined_effects,
+  m17spamm.combined,
   label = "tab:model_summary_m17spamm",
-  digits = 4, align = c(rep("l",7)), display = c("s","G","G","G","G","G","G")
+  digits = 4,
+  align = c("l", rep("G", 6)),
+  display = c("s", "s", "f", "f", "f", "f", "f")
 )
 
-# Save as a .tex file
+# ---- Save as .tex file ----
 sink("results/model_summary_table_NDVI_m17_spamm.tex")
 print(m17spamm.latex_table, include.rownames = FALSE)
 sink()
-
 
