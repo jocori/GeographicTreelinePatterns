@@ -49,6 +49,28 @@ create_peak_list <- function(peak_data) {
 #Create nested list structure for all peaks
 nested_peaks <- lapply(split(peaks, peaks$Name), create_peak_list)
 
+#count number of unique combinations
+# Initialize a vector to hold counts for each mountain
+dfs_per_mountain <- integer(length(nested_peaks))
+
+# Loop over each mountain index
+for (i in seq_along(nested_peaks)) {
+  dfs_per_mountain[i] <- length(
+    rapply(
+      nested_peaks[[i]],
+      f       = function(x) x,
+      classes = "data.frame",
+      how     = "list"
+    )
+  )
+}
+
+# Inspect per-mountain counts
+print(dfs_per_mountain)
+
+# Sum to get grand total
+total_dfs <- sum(dfs_per_mountain)
+print(total_dfs)
 ```
 
 Now that I have the list of all peaks, directions, and years, I need a function that removes rows unless they are associated with treeline (Either the last 10 points on a transect or all the points from the edge to treeline, depending on how many transects were measured). This is to account for differences in geography, where sometimes there are small bare peaks on the way up to the peak of interest. Restricting to points around treeline eliminates the noise these cases create, increasing the probability of detecting the true relationship.
