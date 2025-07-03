@@ -592,8 +592,8 @@ m8.latex_table <- xtable(
   m8.combined_effects,
   label = "tab:model_summary_m8",
   digits = 4,
-  align = c("l", rep("G", 6)),
-  display = c("s", "s", "f", "f", "f", "f", "f")
+  align = c("l", rep("l", 6)),
+  display = c("s", "s", "g", "g", "g", "g", "g")
 )
 
 # Export to .tex file
@@ -674,8 +674,8 @@ m17.latex_table <- xtable(
   m17.combined,
   label = "tab:model_summary_m17spamm",
   digits = 4,
-  align = c("l", rep("G", 6)),
-  display = c("s", "s", "f", "f", "f", "f", "f")
+  align = c("l", rep("l", 6)),
+  display = c("s", "s", "g", "g", "g", "g", "g")
 )
 
 # ---- Save as .tex file ----
