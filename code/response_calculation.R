@@ -6,18 +6,19 @@ library(lme4)
 library(AICcmodavg)
 # read in data
 regs_full<-read.csv("data/Regressions_28Oct.csv", header = TRUE)
-count(regs_full[regs_full$Significance >= 0.05,])
+
 
 ##cleaning data for response variable calculation
 #remove mt. Washington
 regs <-regs_full[regs_full$Peak != "Mt. Washington",]
+#Keep only average NDVI NOT Max (relevant in year calculation)
+regs <- regs %>% filter(Year %in% c("Avg8488", "Avg1317"))
 #Keep linear models only
 regs<-regs[regs$Regression_Type == "Linear",]
 unique(regs$Best_Model)
 regs_full[regs_full$Best_Model=="Reciprocal_Quadratic",]
 
-#Keep only average NDVI NOT Max (relevant in year calculation)
-regs <- regs %>% filter(Year %in% c("Avg8488", "Avg1317"))
+
 #Keep only significant models
 regs<-regs[regs$Significance<=0.05,]
 
