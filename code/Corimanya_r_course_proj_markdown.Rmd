@@ -70,7 +70,10 @@ print(dfs_per_mountain)
 
 # Sum to get grand total
 total_dfs <- sum(dfs_per_mountain)
-print(total_dfs)
+total_combos <-total_dfs*2
+print(total_combos)
+
+###1864 = total while still including Mt. Washington. Without Mt. Washington transect, total is 1848.
 ```
 
 Now that I have the list of all peaks, directions, and years, I need a function that removes rows unless they are associated with treeline (Either the last 10 points on a transect or all the points from the edge to treeline, depending on how many transects were measured). This is to account for differences in geography, where sometimes there are small bare peaks on the way up to the peak of interest. Restricting to points around treeline eliminates the noise these cases create, increasing the probability of detecting the true relationship.
